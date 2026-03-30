@@ -1,7 +1,7 @@
-# Use PHP 8.2 with Apache
-FROM php:8.2-apache
+# Use PHP 8.4 with Apache to match your local environment and composer requirements
+FROM php:8.4-apache
 
-# Install system dependencies for Symfony and PostgreSQL
+# Install system dependencies for Symfony, PostgreSQL, and Intl
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -25,16 +25,16 @@ WORKDIR /var/www/html
 # Allow Composer to run as root/superuser for Render
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Copy composer files first to cache dependencies
+# Copy composer files first to leverage Docker layer caching
 COPY composer.json composer.lock ./
 
-# Install dependencies without running Symfony scripts (scripts fail without DB connection)
+# Install dependencies without running scripts (scripts require DB connection)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Copy the rest of the application code
 COPY . .
 
-# Ensure the var directory exists for Symfony cache and logs
+# Ensure var directory exists for Symfony cache and logs
 RUN mkdir -p var/cache var/log
 
 # Set correct permissions for the Apache user
@@ -45,10 +45,7 @@ RUN chown -R www-data:www-data /var/www/html \
 # Enable Apache mod_rewrite for Symfony routing
 RUN a2enmod rewrite
 
-# Set ServerName to avoid Apache warnings
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-
-# Configure Apache VirtualHost to point to the /public directory
+# Configure Apache VirtualHost to point to /public
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
@@ -62,5 +59,5 @@ RUN echo '<VirtualHost *:80>\n\
 # Expose port 80
 EXPOSE 80
 
-# Start Apache in the foreground
+# Start Apache
 CMD ["apache2-foreground"]
