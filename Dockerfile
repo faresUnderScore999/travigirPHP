@@ -1,7 +1,7 @@
-# Use PHP 8.4 with Apache to match your local environment
+# Use PHP 8.4 with Apache
 FROM php:8.4-apache
 
-# Install system dependencies for Symfony, PostgreSQL, and Intl
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -35,24 +35,27 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 COPY . .
 
 # 4. THE FIX: Create a temporary .env so composer can "dump" it for production
-# This uses the environment variables you set in the Render dashboard
 RUN echo "APP_ENV=prod" > .env && composer dump-env prod
 
 # 5. Ensure the var directory exists for Symfony cache and logs
 RUN mkdir -p var/cache var/log
 
-# 6. Set correct permissions for the Apache user
+# 6. SET PERMISSIONS: Ensure www-data owns the files before warming up cache
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 775 /var/www/html/var
 
-# 7. Enable Apache mod_rewrite for Symfony routing
+# 7. WARM UP CACHE: Pre-generate cache files as the web user
+# This prevents the "Permission Denied" rename error at runtime
+RUN su www-data -s /bin/bash -c "php bin/console cache:warmup --env=prod"
+
+# 8. Enable Apache mod_rewrite for Symfony routing
 RUN a2enmod rewrite
 
-# 8. Set ServerName to avoid Apache warnings
+# 9. Set ServerName to avoid Apache warnings
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# 9. Configure Apache VirtualHost to point to the /public directory
+# 10. Configure Apache VirtualHost
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
@@ -63,8 +66,9 @@ RUN echo '<VirtualHost *:80>\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
-# Expose port 80 and start Apache
+# Expose port 80
 EXPOSE 80
-CMD ["apache2-foreground"]
-# Run migrations then start Apache
+
+# 11. FINAL STEP: Run migrations then start Apache
+# We use a shell string here so both commands run on startup
 CMD php bin/console doctrine:migrations:migrate --no-interaction && apache2-foreground
