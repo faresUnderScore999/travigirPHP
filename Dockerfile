@@ -13,27 +13,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# 1. Install dependencies first (Fast caching)
+# 1. Install dependencies first
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # 2. Copy the rest of the application
 COPY . .
 
-# 3. ENVIRONMENT & DIRECTORY SETUP
-RUN echo "APP_ENV=prod" > .env && composer dump-env prod \
-    && mkdir -p var/cache var/log
+# 3. Directory setup (no cache:warmup here)
+RUN mkdir -p var/cache var/log
 
-# 4. LIGHTWEIGHT PERMISSIONS
-# Instead of chown-ing the whole folder (slow), we only chown what Symfony NEEDS to write to.
+# 4. Permissions
 RUN chown -R www-data:www-data var/
 
-# 5. CACHE WARMUP
-# We do this as root so it has full permissions, then fix owner once more.
-RUN php bin/console cache:warmup --env=prod \
-    && chown -R www-data:www-data var/
-
-# 6. APACHE CONFIG
+# 5. Apache config
 RUN a2enmod rewrite \
     && echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
@@ -47,6 +40,8 @@ RUN echo '<VirtualHost *:80>\n\
 
 EXPOSE 80
 
-# 7. STARTUP SCRIPT
-# This runs migrations and then starts Apache.
-CMD php bin/console doctrine:migrations:migrate --no-interaction && apache2-foreground
+# 6. Startup script - cache:warmup runs at runtime with env vars available
+CMD php bin/console cache:clear --env=prod && \
+    php bin/console cache:warmup --env=prod && \
+    php bin/console doctrine:migrations:migrate --no-interaction && \
+    apache2-foreground
