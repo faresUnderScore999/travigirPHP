@@ -35,6 +35,12 @@
             </div>
 
             <div class="reservation-actions">
+                {% if reservation.status == 'PENDING' %}
+                    <form method="post" class="inline-form">
+                        <button type="submit" name="action_confirm" class="btn btn-success">Confirm Reservation</button>
+                    </form>
+                {% endif %}
+
                 {% if reservation.status not in ['CANCELLED', 'COMPLETED'] %}
                     <form method="post" class="inline-form">
                         <button type="submit" name="action_cancel" class="btn btn-register btn-danger">Cancel Reservation</button>

@@ -60,6 +60,18 @@ class UserController extends AbstractController
         ]);
     }
 
+    #[Route('/admin', name: 'admin_dashboard', methods: ['GET'])]
+    public function dashboard(Request $request): Response
+    {
+        if ($this->ensureAdmin($request) !== null) {
+            return $this->ensureAdmin($request);
+        }
+
+        return $this->render('admin/dashboard.html.twig', [
+            'active_nav' => 'account',
+        ]);
+    }
+
     #[Route('/account/users', name: 'account_users', methods: ['GET'])]
     public function index(Request $request): Response
     {

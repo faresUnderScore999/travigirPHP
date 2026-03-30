@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin Dashboard | Travagir{% endblock %}
+
+{% block body %}
+    <section>
+        <h1>Admin Dashboard</h1>
+        <p class="lead">Available admin actions:</p>
+
+        <ul class="admin-actions">
+            <li><a href="{{ path('account_users') }}" class="btn btn-primary">Manage Users</a></li>
+            <li><a href="{{ path('admin_reservations') }}" class="btn btn-primary">Manage Reservations</a></li>
+            <li><a href="{{ path('travel_voyages') }}" class="btn btn-primary">View Voyages</a></li>
+            <li><a href="{{ path('travel_offers') }}" class="btn btn-primary">View Offers</a></li>
+        </ul>
+    </section>
+{% endblock %}

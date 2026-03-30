@@ -1791,6 +1791,107 @@ section h2 {
     box-shadow: 0 8px 20px rgba(68, 121, 207, 0.2);
 }
 
+/* Voyage Offer Section */
+.voyage-offer-section {
+    display: flex;
+    justify-content: center;
+    margin: 24px 0;
+}
+
+.offer-banner {
+    background: linear-gradient(135deg, rgba(255, 153, 0, 0.1) 0%, rgba(68, 121, 207, 0.1) 100%);
+    border: 2px solid rgba(255, 153, 0, 0.4);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(255, 153, 0, 0.15);
+}
+
+.offer-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--amazon-orange), var(--amazon-orange-soft), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.offer-badge-large {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--amazon-orange), var(--amazon-orange-soft));
+    color: #0a0f1c;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 15px rgba(255, 153, 0, 0.3);
+}
+
+.offer-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--amazon-orange-soft);
+    margin: 8px 0;
+}
+
+.offer-description {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin: 12px 0 16px 0;
+    line-height: 1.5;
+}
+
+.offer-details {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.offer-discount {
+    display: inline-block;
+    color: var(--amazon-orange-soft);
+    font-size: 1.2rem;
+    font-weight: 800;
+    padding: 8px 12px;
+    background: rgba(255, 153, 0, 0.15);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 153, 0, 0.3);
+}
+
+.offer-expiry {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.offer-badge {
+    display: inline-block;
+    margin-top: 8px;
+    color: var(--amazon-orange-soft);
+    font-weight: 700;
+    font-size: 0.85rem;
+    background: rgba(255, 153, 0, 0.15);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 153, 0, 0.3);
+}
+
 @media (max-width: 768px) {
     .voyage-main-card {
         padding: 24px;
@@ -1829,6 +1930,19 @@ section h2 {
 
     .voyage-hero {
         height: 300px;
+    }
+
+    .offer-banner {
+        padding: 24px;
+    }
+
+    .offer-title {
+        font-size: 1.2rem;
+    }
+
+    .offer-details {
+        flex-direction: column;
+        gap: 12px;
     }
 }
 

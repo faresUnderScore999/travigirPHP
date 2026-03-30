@@ -30,8 +30,11 @@
                             <a href="{{ path('account_settings') }}" class="account-link">Account Settings</a>
                             <a href="{{ path('account_bookings') }}" class="account-link">My Bookings</a>
                             <a href="{{ path('account_favorites') }}" class="account-link">Favorites</a>
-                            {% if app.session.get('auth_user').is_admin is defined and app.session.get('auth_user').is_admin %}
+                            {% set authUser = app.session.get('auth_user') %}
+                            {% if authUser is defined and authUser is not empty and authUser.is_admin|default(false) %}
+                                <a href="{{ path('admin_dashboard') }}" class="account-link">Admin Dashboard</a>
                                 <a href="{{ path('account_users') }}" class="account-link">Manage Users</a>
+                                <a href="{{ path('admin_reservations') }}" class="account-link">Manage Reservations</a>
                             {% endif %}
                             <hr>
                             <form method="post" action="{{ path('auth_logout') }}">
@@ -48,6 +51,12 @@
     </header>
 
     <main class="container">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="flash-{{ label }} alert">{{ message }}</div>
+            {% endfor %}
+        {% endfor %}
+
         {% block body %}{% endblock %}
     </main>
 

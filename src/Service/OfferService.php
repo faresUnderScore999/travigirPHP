@@ -19,9 +19,7 @@ class OfferService
             $offers = [];
         }
 
-        if ($offers === []) {
-            return $this->fallbackOffers();
-        }
+  
 
         $normalized = [];
 
@@ -46,38 +44,8 @@ class OfferService
             ];
         }
 
-        return $normalized === [] ? $this->fallbackOffers() : $normalized;
+        return $normalized;
     }
 
-    private function fallbackOffers(): array
-    {
-        return [
-            [
-                'id' => 1,
-                'title' => 'Spring Escape',
-                'description' => 'Book before month end and enjoy a city-break discount.',
-                'discount_percentage' => 15,
-                'start_date' => '2026-03-01',
-                'end_date' => '2026-05-30',
-                'voyage_id' => 1,
-                'voyage_title' => 'Magical Marrakech',
-                'destination' => 'Marrakech, Morocco',
-                'price' => 950,
-                'image_url' => 'https://images.unsplash.com/photo-1597212618440-806262de4f6b?auto=format&fit=crop&w=1200&q=80',
-            ],
-            [
-                'id' => 2,
-                'title' => 'Family Summer Offer',
-                'description' => 'Family package with airport transfer included.',
-                'discount_percentage' => 20,
-                'start_date' => '2026-06-01',
-                'end_date' => '2026-08-31',
-                'voyage_id' => 2,
-                'voyage_title' => 'Santorini Sunsets',
-                'destination' => 'Santorini, Greece',
-                'price' => 1400,
-                'image_url' => 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=80',
-            ],
-        ];
-    }
+ 
 }

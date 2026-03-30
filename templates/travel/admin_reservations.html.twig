@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin Reservations | Travagir{% endblock %}
+
+{% block body %}
+    <section>
+        <h1>All Reservations</h1>
+        <p class="lead">Manage and confirm pending reservations.</p>
+
+        {% if reservations is empty %}
+            <p>No reservations yet.</p>
+        {% else %}
+            <div class="grid">
+                {% for reservation in reservations %}
+                    <article class="reservation-card">
+                        <div class="reservation-header">
+                            <div>
+                                <h3>{{ reservation.voyage_title }} ({{ reservation.destination }})</h3>
+                                <p class="meta">Reservation #{{ reservation.id }} · {{ reservation.reservation_date|date('d M Y H:i') }} · {{ reservation.user_name }} ({{ reservation.user_email }})</p>
+                            </div>
+                            <span class="status status-{{ reservation.status|lower }}">{{ reservation.status }}</span>
+                        </div>
+
+                        <div class="reservation-info-grid">
+                            <div><strong>People</strong><br>{{ reservation.number_of_people }}</div>
+                            <div><strong>Total</strong><br>${{ reservation.total_price|number_format(2, '.', ',') }}</div>
+                            <div><strong>Payment</strong><br>{{ reservation.payment_status }}</div>
+                        </div>
+
+                        <div class="card-footer">
+                            {% if reservation.status == 'PENDING' %}
+                                <form method="post" action="{{ path('admin_reservation_confirm', {id: reservation.id}) }}" class="inline-form">
+                                    <button type="submit" class="btn btn-success">Confirm</button>
+                                </form>
+                            {% endif %}
+                            {% if reservation.status in ['PENDING', 'CONFIRMED'] %}
+                                <form method="post" action="{{ path('admin_reservation_cancel', {id: reservation.id}) }}" class="inline-form">
+                                    <button type="submit" class="btn btn-danger">Cancel</button>
+                                </form>
+                            {% endif %}
+                            <a href="{{ path('account_reservation_detail', {id: reservation.id}) }}" class="btn btn-primary">Details</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <p class="back-link"><a href="{{ path('travel_home') }}">← Back to Home</a></p>
+    </section>
+{% endblock %}

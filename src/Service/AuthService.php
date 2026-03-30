@@ -68,7 +68,7 @@ class AuthService
             ]);
         }
 
-        return $this->fallbackAuthenticate($email, $plainPassword);
+        return null;
     }
 
     public function emailExists(string $email): bool
@@ -79,18 +79,7 @@ class AuthService
             return false;
         }
 
-        // First check fallback users
-        $fallbackUsers = [
-            ['email' => 'admin@travagir.com'],
-            ['email' => 'user@travagir.com'],
-        ];
-
-        foreach ($fallbackUsers as $fallbackUser) {
-            if ($fallbackUser['email'] === $email) {
-                return true;
-            }
-        }
-
+  
         // Then check database - catch connection exceptions gracefully
         try {
             $user = $this->userRepository->findOneByEmail($email);
@@ -118,52 +107,12 @@ class AuthService
             return password_verify($plainPassword, $storedPassword);
         }
 
-        // Plain text comparison (fallback)
-        return hash_equals($storedPassword, $plainPassword);
+ 
+        return false;
     }
 
-    private function fallbackAuthenticate(string $email, string $plainPassword): ?array
-    {
-        $this->logger->info('Attempting fallback authentication', ['email' => $email]);
-        
-        $fallbackUsers = [
-            [
-                'id' => 1,
-                'username' => 'Demo Admin',
-                'email' => 'admin@travagir.com',
-                'password' => 'admin123',
-            ],
-            [
-                'id' => 2,
-                'username' => 'Demo Traveler',
-                'email' => 'user@travagir.com',
-                'password' => 'user123',
-            ],
-        ];
+    // Fallback authentication is disabled for security; use persistent users only.
 
-        foreach ($fallbackUsers as $user) {
-            if ($user['email'] === $email && hash_equals($user['password'], $plainPassword)) {
-                $this->logger->info('Fallback login successful', [
-                    'email' => $email,
-                    'user_id' => $user['id'],
-                    'username' => $user['username'],
-                    'auth_method' => 'fallback'
-                ]);
-                
-                unset($user['password']);
-                $user['is_admin'] = ($email === 'admin@travagir.com');
-
-                return $user;
-            }
-        }
-
-        $this->logger->warning('Login failed - all authentication methods failed', [
-            'email' => $email,
-            'reason' => 'Invalid credentials'
-        ]);
-
-        return null;
-    }
 
     public function register(string $username, string $email, string $plainPassword): ?array
     {

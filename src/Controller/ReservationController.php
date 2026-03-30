@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Service\ReservationService;
 use App\Service\VoyageService;
 use App\Service\OfferService;
+use App\Utility\DatabaseInitializer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,20 +16,24 @@ class ReservationController extends AbstractController
     public function __construct(
         private readonly ReservationService $reservationService,
         private readonly VoyageService $voyageService,
-        private readonly OfferService $offerService
-    ) {
-    }
+        private readonly OfferService $offerService,
+        private readonly DatabaseInitializer $databaseInitializer
+    ) {}
 
     #[Route('/voyages/{id}/reserve', name: 'travel_voyage_reserve', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
     public function reserveVoyage(Request $request, int $id): Response
     {
+        $this->databaseInitializer->ensureSchema();
+
         $user = $request->getSession()->get('auth_user');
         if (!$user) {
             return $this->redirectToRoute('auth_login');
         }
 
         $voyage = $this->voyageService->getVoyageById($id);
+      
         if ($voyage === null) {
+            
             throw $this->createNotFoundException('Voyage not found');
         }
 
@@ -39,40 +44,73 @@ class ReservationController extends AbstractController
         $success = null;
 
         if ($request->isMethod('POST')) {
-            $numberOfPeople = max(1, (int) $request->request->get('number_of_people', 1));
-            $reason = (string) $request->request->get('special_requests', '');
+
+
+
+            $numberOfPeople = (int) $request->request->get('number_of_people', 1);
+
+            if ($numberOfPeople < 1 || $numberOfPeople > 20) {
+                $this->addFlash('error', 'Invalid number of people');
+                return $this->redirectToRoute('travel_voyage_reserve', ['id' => $id]);
+            }
 
             $voyagePrice = (float) ($voyage['price'] ?? 0);
             $discount = $activeOffer ? ((float) $activeOffer['discount_percentage'] / 100) : 0;
             $totalPrice = $numberOfPeople * $voyagePrice * (1 - $discount);
 
-            $created = $this->reservationService->createReservation(
-                $user['id'],
-                $id,
-                $activeOffer ? (int) $activeOffer['id'] : null,
-                $numberOfPeople,
-                $totalPrice
-            );
+            try {
+             
+                $created = $this->reservationService->createReservation(
+                    $user['id'],
+                    $id,
+                    $activeOffer ? (int) $activeOffer['id'] : null,
+                    $numberOfPeople,
+                    $totalPrice
+                );
 
-            if ($created === null) {
-                $error = 'Failed to create reservation. Please check your data and try again.';
-            } else {
-                $success = 'Reservation created and pending admin decision. You can cancel anytime from your reservations list.';
+                if ($created === null) {
+                    throw new \Exception('Creation failed');
+                }
+
+                $this->addFlash('success', 'Reservation created successfully');
+            } catch (\Throwable $e) {
+                $this->addFlash('error', $e->getMessage());
+    
             }
+
+            return $this->redirectToRoute('travel_voyage_reserve', ['id' => $id]);
         }
+
 
         return $this->render('travel/reserve.html.twig', [
             'active_nav' => 'voyages',
             'voyage' => $voyage,
             'offer' => $activeOffer,
-            'error' => $error,
-            'success' => $success,
+           
         ]);
+    }
+
+    private function ensureAdmin(Request $request): ?Response
+    {
+        $user = $request->getSession()->get('auth_user');
+        if (!$user) {
+            return $this->redirectToRoute('auth_login');
+        }
+
+        $isAdmin = $user['is_admin'] ?? false;
+        if (!$isAdmin) {
+            $this->addFlash('error', 'Admin access required.');
+            return $this->redirectToRoute('travel_home');
+        }
+
+        return null;
     }
 
     #[Route('/account/bookings', name: 'account_bookings', methods: ['GET'])]
     public function accountBookings(Request $request): Response
     {
+        $this->databaseInitializer->ensureSchema();
+
         $user = $request->getSession()->get('auth_user');
         if (!$user) {
             return $this->redirectToRoute('auth_login');
@@ -84,6 +122,55 @@ class ReservationController extends AbstractController
             'active_nav' => 'account',
             'bookings' => $reservations,
         ]);
+    }
+
+    #[Route('/admin/reservations', name: 'admin_reservations', methods: ['GET'])]
+    public function adminReservations(Request $request): Response
+    {
+        $this->databaseInitializer->ensureSchema();
+
+        if ($this->ensureAdmin($request) !== null) {
+            return $this->ensureAdmin($request);
+        }
+
+        $reservations = $this->reservationService->listAllReservations();
+
+        return $this->render('travel/admin_reservations.html.twig', [
+            'active_nav' => 'account',
+            'reservations' => $reservations,
+        ]);
+    }
+
+    #[Route('/admin/reservations/{id}/confirm', name: 'admin_reservation_confirm', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    public function adminConfirm(Request $request, int $id): Response
+    {
+        if ($this->ensureAdmin($request) !== null) {
+            return $this->ensureAdmin($request);
+        }
+
+        if ($this->reservationService->confirmReservationAsAdmin($id)) {
+            $this->addFlash('success', 'Reservation confirmed successfully.');
+        } else {
+            $this->addFlash('error', 'Unable to confirm reservation.');
+        }
+
+        return $this->redirectToRoute('admin_reservations');
+    }
+
+    #[Route('/admin/reservations/{id}/cancel', name: 'admin_reservation_cancel', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    public function adminCancel(Request $request, int $id): Response
+    {
+        if ($this->ensureAdmin($request) !== null) {
+            return $this->ensureAdmin($request);
+        }
+
+        if ($this->reservationService->cancelReservationAsAdmin($id)) {
+            $this->addFlash('success', 'Reservation cancelled successfully.');
+        } else {
+            $this->addFlash('error', 'Unable to cancel reservation.');
+        }
+
+        return $this->redirectToRoute('admin_reservations');
     }
 
     #[Route('/account/reservations/{id}', name: 'account_reservation_detail', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
@@ -103,10 +190,19 @@ class ReservationController extends AbstractController
         $success = null;
 
         if ($request->isMethod('POST')) {
+            if ($request->request->has('action_confirm')) {
+                if ($this->reservationService->confirmReservation($id, $user['id'])) {
+                    $this->addFlash('success', 'Reservation confirmed successfully. Enjoy your trip!');
+                    return $this->redirectToRoute('account_bookings');
+                } else {
+                    $error = 'Unable to confirm reservation. It may already be confirmed, cancelled, or invalid.';
+                }
+            }
+
             if ($request->request->has('action_cancel')) {
                 if ($this->reservationService->cancelReservation($id, $user['id'])) {
-                    $success = 'Reservation successfully cancelled.';
-                    $reservation['status'] = 'CANCELLED';
+                    $this->addFlash('success', 'Reservation successfully cancelled.');
+                    return $this->redirectToRoute('account_bookings');
                 } else {
                     $error = 'Unable to cancel reservation. It may already be processed or cancelled.';
                 }

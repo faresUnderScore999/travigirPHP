@@ -20,6 +20,13 @@ class ReservationService
         }
 
         try {
+            // Keep unique constraint stable: if a pending/cancelled reservation already exists, return it instead of failing.
+            $existing = $this->getReservationByUserAndVoyage($userId, $voyageId);
+            if ($existing) {
+                $this->logger->info('Existing reservation found for user/voyage; returning existing', ['user_id' => $userId, 'voyage_id' => $voyageId, 'status' => $existing['status']] ) ;
+                return $existing;
+            }
+
             $this->connection->insert('reservations', [
                 'user_id' => $userId,
                 'voyage_id' => $voyageId,
@@ -35,6 +42,7 @@ class ReservationService
             $id = (int) $this->connection->lastInsertId();
             return $this->getReservationById($id, $userId);
         } catch (\Throwable $e) {
+          
             $this->logger->error('Failed to create reservation', ['error' => $e->getMessage(), 'user_id' => $userId]);
             return null;
         }
@@ -71,6 +79,20 @@ SQL;
         return $reservation;
     }
 
+    public function getReservationByUserAndVoyage(int $userId, int $voyageId): ?array
+    {
+        $sql = <<<'SQL'
+SELECT r.*, v.title AS voyage_title, v.description AS voyage_description, v.destination, v.start_date AS voyage_start, v.end_date AS voyage_end, v.price AS voyage_price
+FROM reservations r
+JOIN voyages v ON v.id = r.voyage_id
+WHERE r.user_id = :user_id AND r.voyage_id = :voyage_id
+SQL;
+
+        $reservation = $this->connection->fetchAssociative($sql, ['user_id' => $userId, 'voyage_id' => $voyageId]);
+
+        return $reservation ?: null;
+    }
+
     public function cancelReservation(int $reservationId, int $userId): bool
     {
         try {
@@ -87,6 +109,88 @@ SQL;
             return $updated > 0;
         } catch (\Throwable $e) {
             $this->logger->error('Failed to cancel reservation', ['error' => $e->getMessage(), 'reservation_id' => $reservationId, 'user_id' => $userId]);
+            return false;
+        }
+    }
+
+    public function confirmReservationAsAdmin(int $reservationId): bool
+    {
+        try {
+            $updated = $this->connection->executeStatement(
+                'UPDATE reservations SET status = :confirmed, payment_status = :paid, payment_date = :paid_date, updated_at = :now WHERE id = :id AND status = :pending',
+                [
+                    'confirmed' => 'CONFIRMED',
+                    'paid' => 'PAID',
+                    'paid_date' => (new \DateTime())->format('Y-m-d H:i:s'),
+                    'now' => (new \DateTime())->format('Y-m-d H:i:s'),
+                    'id' => $reservationId,
+                    'pending' => 'PENDING',
+                ]
+            );
+
+            return $updated > 0;
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to confirm reservation as admin', ['error' => $e->getMessage(), 'reservation_id' => $reservationId]);
+            return false;
+        }
+    }
+
+    public function cancelReservationAsAdmin(int $reservationId): bool
+    {
+        try {
+            $updated = $this->connection->executeStatement(
+                'UPDATE reservations SET status = :cancelled, updated_at = :now WHERE id = :id AND status IN (\'PENDING\', \'CONFIRMED\')',
+                [
+                    'cancelled' => 'CANCELLED',
+                    'now' => (new \DateTime())->format('Y-m-d H:i:s'),
+                    'id' => $reservationId,
+                ]
+            );
+
+            return $updated > 0;
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to cancel reservation as admin', ['error' => $e->getMessage(), 'reservation_id' => $reservationId]);
+            return false;
+        }
+    }
+
+    public function listAllReservations(): array
+    {
+        $sql = <<<'SQL'
+SELECT r.*, u.username AS user_name, u.email AS user_email, v.title AS voyage_title, v.destination, v.start_date AS voyage_start, v.end_date AS voyage_end
+FROM reservations r
+JOIN users u ON u.id = r.user_id
+JOIN voyages v ON v.id = r.voyage_id
+ORDER BY r.reservation_date DESC
+SQL;
+
+        return $this->connection->fetchAllAssociative($sql);
+    }
+
+    public function confirmReservation(int $reservationId, int $userId): bool
+    {
+        $reservation = $this->getReservationById($reservationId, $userId);
+        if (!$reservation || $reservation['status'] !== 'PENDING') {
+            return false;
+        }
+
+        try {
+            $updated = $this->connection->executeStatement(
+                'UPDATE reservations SET status = :confirmed, payment_status = :paid, payment_date = :paid_date, updated_at = :now WHERE id = :id AND user_id = :user_id AND status = :pending',
+                [
+                    'confirmed' => 'CONFIRMED',
+                    'paid' => 'PAID',
+                    'paid_date' => (new \DateTime())->format('Y-m-d H:i:s'),
+                    'now' => (new \DateTime())->format('Y-m-d H:i:s'),
+                    'id' => $reservationId,
+                    'user_id' => $userId,
+                    'pending' => 'PENDING',
+                ]
+            );
+
+            return $updated > 0;
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to confirm reservation', ['error' => $e->getMessage(), 'reservation_id' => $reservationId, 'user_id' => $userId]);
             return false;
         }
     }
