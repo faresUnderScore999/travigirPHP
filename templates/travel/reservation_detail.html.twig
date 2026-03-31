@@ -26,13 +26,16 @@
                 </div>
             </div>
 
-            <div class="reservation-info-grid">
-                <div><strong>Voyage</strong><br>{{ reservation.voyage_title }}</div>
-                <div><strong>Destination</strong><br>{{ reservation.destination }}</div>
-                <div><strong>Dates</strong><br>{{ reservation.voyage_start ? reservation.voyage_start|date('d M Y') : 'TBD' }} → {{ reservation.voyage_end ? reservation.voyage_end|date('d M Y') : 'TBD' }}</div>
-                <div><strong>People</strong><br>{{ reservation.number_of_people }}</div>
-                <div><strong>Total Price</strong><br>${{ reservation.total_price|number_format(2, '.', ',') }}</div>
-            </div>
+    <div class="reservation-info-grid">
+        {% if is_admin_view %}
+        <div><strong>User</strong><br>{{ reservation.user_name }}<br><small>{{ reservation.user_email }}</small></div>
+        {% endif %}
+        <div><strong>Voyage</strong><br>{{ reservation.voyage_title }}</div>
+        <div><strong>Destination</strong><br>{{ reservation.destination }}</div>
+        <div><strong>Dates</strong><br>{{ reservation.voyage_start ? reservation.voyage_start|date('d M Y') : 'TBD' }} → {{ reservation.voyage_end ? reservation.voyage_end|date('d M Y') : 'TBD' }}</div>
+        <div><strong>People</strong><br>{{ reservation.number_of_people }}</div>
+        <div><strong>Total Price</strong><br>${{ reservation.total_price|number_format(2, '.', ',') }}</div>
+    </div>
 
             <div class="reservation-actions">
                 {% if reservation.status == 'PENDING' %}
@@ -58,7 +61,13 @@
                 {% endif %}
             </div>
 
-            <p class="back-link"><a href="{{ path('account_bookings') }}">← Back to My Bookings</a></p>
+    <p class="back-link">
+        {% if is_admin_view %}
+        <a href="{{ path('admin_reservations') }}">← Back to All Reservations</a>
+        {% else %}
+        <a href="{{ path('account_bookings') }}">← Back to My Bookings</a>
+        {% endif %}
+    </p>
         </div>
     </section>
 {% endblock %}

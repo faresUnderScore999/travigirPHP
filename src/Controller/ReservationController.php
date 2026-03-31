@@ -181,7 +181,14 @@ class ReservationController extends AbstractController
             return $this->redirectToRoute('auth_login');
         }
 
-        $reservation = $this->reservationService->getReservationById($id, $user['id']);
+        // Admin can view any reservation, regular users can only view their own
+        $isAdmin = $user['is_admin'] ?? false;
+        if ($isAdmin) {
+            $reservation = $this->reservationService->getReservationByIdAdmin($id);
+        } else {
+            $reservation = $this->reservationService->getReservationById($id, $user['id']);
+        }
+        
         if (!$reservation) {
             throw $this->createNotFoundException('Reservation not found');
         }
@@ -222,11 +229,12 @@ class ReservationController extends AbstractController
             }
         }
 
-        return $this->render('travel/reservation_detail.html.twig', [
-            'active_nav' => 'account',
-            'reservation' => $reservation,
-            'error' => $error,
-            'success' => $success,
-        ]);
+    return $this->render('travel/reservation_detail.html.twig', [
+        'active_nav' => 'account',
+        'reservation' => $reservation,
+        'error' => $error,
+        'success' => $success,
+        'is_admin_view' => $isAdmin,
+    ]);
     }
 }

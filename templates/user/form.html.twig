@@ -1,65 +1,284 @@
 {% extends 'base.html.twig' %}
-
 {% block title %}{{ is_edit ? 'Edit User' : 'Create User' }} | Travagir{% endblock %}
 
 {% block body %}
-    <section>
-        <h1>{{ is_edit ? 'Modify User' : 'New User' }}</h1>
+<div class="settings-page">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>{{ is_edit ? 'Modify User' : 'Create New User' }}</h1>
+            <p class="lead">{{ is_edit ? 'Update user information and permissions.' : 'Add a new user to the system.' }}</p>
+        </div>
+    </div>
 
-        {% if error %}
-            <div class="alert alert-error">{{ error }}</div>
-        {% endif %}
+    {% if error %}
+    <div class="alert alert-error">
+        <span class="alert-icon">⚠</span>
+        {{ error }}
+    </div>
+    {% endif %}
 
-        <form method="post" class="card settings-card">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" value="{{ formData.username }}" required>
+    <div class="form-container">
+        <form method="post" class="settings-form">
+            <div class="form-section">
+                <h3>Personal Information</h3>
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="username" name="username" value="{{ formData.username }}" required placeholder="Enter username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉</span>
+                        <input type="email" id="email" name="email" value="{{ formData.email }}" required placeholder="user@example.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tel">Phone Number</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">📱</span>
+                        <input type="tel" id="tel" name="tel" value="{{ formData.tel }}" placeholder="+1 555 555 5555">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="image_url">Profile Image URL</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🖼</span>
+                        <input type="url" id="image_url" name="image_url" value="{{ formData.image_url }}" placeholder="https://example.com/image.jpg">
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" value="{{ formData.email }}" required>
-            </div>
-
-            <div class="form-group">
-                <label for="tel">Phone</label>
-                <input type="tel" id="tel" name="tel" value="{{ formData.tel }}" placeholder="+1 555 555 5555">
-            </div>
-
-            <div class="form-group">
-                <label for="image_url">Profile Image URL</label>
-                <input type="url" id="image_url" name="image_url" value="{{ formData.image_url }}" placeholder="https://...">
-            </div>
-
-            {% if not is_edit %}
+            <div class="form-section">
+                <h3>{{ is_edit ? 'Change Password' : 'Set Password' }}</h3>
+                
+                {% if not is_edit %}
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="password" name="password" required placeholder="Enter password">
+                    </div>
+                    <span class="input-hint">Must be at least 6 characters</span>
                 </div>
 
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔐</span>
+                        <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm password">
+                    </div>
                 </div>
-            {% else %}
+                {% else %}
                 <div class="form-group">
                     <label for="current_password">Current Password</label>
-                    <input type="password" id="current_password" name="current_password" value="{{ formData.current_password }}" placeholder="Needed to change password">
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔑</span>
+                        <input type="password" id="current_password" name="current_password" value="{{ formData.current_password }}" placeholder="Required to change password">
+                    </div>
+                    <span class="input-hint">Leave blank to keep current password</span>
                 </div>
 
                 <div class="form-group">
                     <label for="new_password">New Password</label>
-                    <input type="password" id="new_password" name="new_password" value="{{ formData.new_password }}" placeholder="Leave blank to keep current password">
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="new_password" name="new_password" value="{{ formData.new_password }}" placeholder="Enter new password">
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="confirm_password">Confirm New Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" value="{{ formData.confirm_password }}" placeholder="Re-type new password">
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔐</span>
+                        <input type="password" id="confirm_password" name="confirm_password" value="{{ formData.confirm_password }}" placeholder="Confirm new password">
+                    </div>
                 </div>
-            {% endif %}
+                {% endif %}
+            </div>
 
-            <button type="submit" class="btn-register">{{ is_edit ? 'Save changes' : 'Create user' }}</button>
-            <a class="btn btn-small" href="{{ path('account_users') }}">Cancel</a>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span>✓</span>
+                    {{ is_edit ? 'Save Changes' : 'Create User' }}
+                </button>
+                <a href="{{ path('account_users') }}" class="btn btn-secondary">
+                    Cancel
+                </a>
+            </div>
         </form>
-    </section>
+    </div>
+</div>
+
+<style>
+.settings-page {
+    padding: 30px 20px;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 2rem;
+}
+
+.page-header .lead {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.form-container {
+    background: var(--amazon-white);
+    border: 1px solid var(--border-dark);
+    border-radius: 16px;
+    padding: 32px;
+}
+
+.form-section {
+    margin-bottom: 32px;
+}
+
+.form-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.form-section h3 {
+    font-size: 1.1rem;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-dark);
+    color: var(--text-primary);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--text-muted);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 14px 14px 14px 44px;
+    border: 2px solid var(--border-dark);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: var(--amazon-orange);
+    box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.15);
+}
+
+.input-wrapper input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.input-hint {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-dark);
+}
+
+.form-actions .btn {
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 2px solid var(--border-dark);
+    color: var(--text-muted);
+}
+
+.btn-secondary:hover {
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+
+/* Alert */
+.alert-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 12px;
+    color: #ef4444;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.alert-icon {
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .form-container {
+        padding: 24px 20px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
 {% endblock %}

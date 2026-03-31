@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Service\AuthService;
+use App\Service\ReservationService;
 use App\Service\VoyageService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,6 +14,7 @@ class UserController extends AbstractController
 {
     public function __construct(
         private readonly AuthService $authService,
+        private readonly ReservationService $reservationService,
         private readonly VoyageService $voyageService
     ) {
     }
@@ -67,8 +69,39 @@ class UserController extends AbstractController
             return $this->ensureAdmin($request);
         }
 
+        // Get statistics for dashboard
+        $users = $this->authService->listUsers();
+        $reservations = $this->reservationService->listAllReservations();
+        $voyages = $this->voyageService->getAllVoyages();
+        
+        // Calculate statistics
+        $totalUsers = count($users);
+        $totalReservations = count($reservations);
+        $pendingReservations = count(array_filter($reservations, fn($r) => $r['status'] === 'PENDING'));
+        $confirmedReservations = count(array_filter($reservations, fn($r) => $r['status'] === 'CONFIRMED'));
+        $cancelledReservations = count(array_filter($reservations, fn($r) => $r['status'] === 'CANCELLED'));
+        $totalRevenue = array_sum(array_map(fn($r) => (float) ($r['total_price'] ?? 0), $reservations));
+        $totalVoyages = count($voyages);
+        
+        // Get recent reservations (last 5)
+        $recentReservations = array_slice($reservations, 0, 5);
+        
+        // Get recent users (last 5)
+        $recentUsers = array_slice($users, 0, 5);
+
         return $this->render('admin/dashboard.html.twig', [
             'active_nav' => 'account',
+            'stats' => [
+                'total_users' => $totalUsers,
+                'total_reservations' => $totalReservations,
+                'pending_reservations' => $pendingReservations,
+                'confirmed_reservations' => $confirmedReservations,
+                'cancelled_reservations' => $cancelledReservations,
+                'total_revenue' => $totalRevenue,
+                'total_voyages' => $totalVoyages,
+            ],
+            'recent_reservations' => $recentReservations,
+            'recent_users' => $recentUsers,
         ]);
     }
 

@@ -1,0 +1,21 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": true
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "ep-hidden-recipe-ag3gvps2-pooler.c-2.eu-central-1.aws.neon.tech",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "Neon_Travigir",
+            "database": "neondb",
+            "username": "neondb_owner",
+            "password": "npg_6xJ1sdpgAXZN",
+            "connectionTimeout": 10000
+        }
+    ]
+}

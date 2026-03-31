@@ -1,37 +1,362 @@
 {% extends 'base.html.twig' %}
-
 {% block title %}Register | Travagir{% endblock %}
 
 {% block body %}
-    <section class="auth-section">
-        <h1>Register</h1>
-        <p class="lead">Create your account to start planning your travels.</p>
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <span class="logo-icon">✈</span>
+                    <span class="logo-text">Travagir</span>
+                </div>
+                <h1>Create Account</h1>
+                <p class="lead">Join us and start your adventure</p>
+            </div>
 
-        <div class="auth-container">
-            <form class="contact-form" method="post" action="{{ path('auth_register') }}">
+            <form class="auth-form" method="post" action="{{ path('auth_register') }}">
                 {% if error %}
-                    <p class="error-message">{{ error }}</p>
+                <div class="alert alert-error">
+                    <span class="alert-icon">⚠</span>
+                    {{ error }}
+                </div>
                 {% endif %}
 
-                <label>Username
-                    <input type="text" name="username" value="{{ username }}" placeholder="Your username" required>
-                </label>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            value="{{ username }}"
+                            placeholder="Choose a username" 
+                            required
+                            autocomplete="username"
+                        >
+                    </div>
+                </div>
 
-                <label>Email
-                    <input type="email" name="email" value="{{ email }}" placeholder="you@example.com" required>
-                </label>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉</span>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            value="{{ email }}"
+                            placeholder="you@example.com" 
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+                </div>
 
-                <label>Password
-                    <input type="password" name="password" placeholder="********" required>
-                </label>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Create a password" 
+                            required
+                            autocomplete="new-password"
+                        >
+                    </div>
+                    <span class="input-hint">Must be at least 6 characters</span>
+                </div>
 
-                <label>Confirm Password
-                    <input type="password" name="confirm_password" placeholder="********" required>
-                </label>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔐</span>
+                        <input 
+                            type="password" 
+                            id="confirm_password" 
+                            name="confirm_password" 
+                            placeholder="Confirm your password" 
+                            required
+                            autocomplete="new-password"
+                        >
+                    </div>
+                </div>
 
-                <button type="submit" class="btn btn-primary">Register</button>
-                <p class="meta">Already have an account? <a href="{{ path('auth_login') }}">Login here</a></p>
+                <div class="terms-notice">
+                    <p>By creating an account, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    Create Account
+                </button>
             </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{{ path('auth_login') }}">Sign in</a></p>
+            </div>
         </div>
-    </section>
+
+        <div class="auth-visual">
+            <div class="visual-content">
+                <h2>Start Your Journey</h2>
+                <p>Join thousands of travelers who trust Travagir for their adventures.</p>
+                <div class="visual-features">
+                    <div class="feature">
+                        <span>✓</span>
+                        <span>Book amazing trips</span>
+                    </div>
+                    <div class="feature">
+                        <span>✓</span>
+                        <span>Save your favorites</span>
+                    </div>
+                    <div class="feature">
+                        <span>✓</span>
+                        <span>Get exclusive deals</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.auth-page {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, rgba(15, 23, 34, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+}
+
+.auth-container {
+    display: flex;
+    max-width: 1000px;
+    width: 100%;
+    background: var(--amazon-white);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.auth-card {
+    flex: 1;
+    padding: 48px 40px;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.auth-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.logo-icon {
+    font-size: 2rem;
+    color: var(--amazon-orange);
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.auth-header h1 {
+    font-size: 1.75rem;
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+}
+
+.auth-header .lead {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Form Styles */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--text-muted);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 14px 14px 14px 44px;
+    border: 2px solid var(--border-dark);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: var(--amazon-white);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: var(--amazon-orange);
+    box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.15);
+}
+
+.input-wrapper input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.input-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Terms Notice */
+.terms-notice {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.terms-notice a {
+    color: var(--amazon-orange);
+    text-decoration: none;
+}
+
+.terms-notice a:hover {
+    text-decoration: underline;
+}
+
+/* Button */
+.btn-block {
+    width: 100%;
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+/* Footer */
+.auth-footer {
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-dark);
+    color: var(--text-muted);
+}
+
+.auth-footer a {
+    color: var(--amazon-orange);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Visual Side */
+.auth-visual {
+    flex: 1;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    padding: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.visual-content {
+    color: white;
+    text-align: center;
+}
+
+.visual-content h2 {
+    font-size: 2rem;
+    margin: 0 0 16px 0;
+}
+
+.visual-content p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0 0 32px 0;
+}
+
+.visual-features {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* Alert */
+.alert-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 12px;
+    color: #ef4444;
+    font-size: 0.9rem;
+}
+
+.alert-icon {
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .auth-container {
+        flex-direction: column;
+    }
+    
+    .auth-visual {
+        display: none;
+    }
+    
+    .auth-card {
+        padding: 32px 24px;
+    }
+}
+</style>
 {% endblock %}

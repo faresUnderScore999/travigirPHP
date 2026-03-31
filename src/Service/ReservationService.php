@@ -195,6 +195,21 @@ SQL;
         }
     }
 
+    public function getReservationByIdAdmin(int $reservationId): ?array
+    {
+        $sql = <<<'SQL'
+        SELECT r.*, v.title AS voyage_title, v.description AS voyage_description,
+               v.destination, v.start_date AS voyage_start, v.end_date AS voyage_end,
+               v.price AS voyage_price, u.username AS user_name, u.email AS user_email
+        FROM reservations r
+        JOIN voyages v ON v.id = r.voyage_id
+        JOIN users u ON u.id = r.user_id
+        WHERE r.id = :id
+        SQL;
+        $reservation = $this->connection->fetchAssociative($sql, ['id' => $reservationId]);
+        return $reservation ?: null;
+    }
+
     public function requestRefund(int $reservationId, int $userId, string $reason): bool
     {
         // Only allow if reservation belongs to user and is not PENDING or CANCELLED -> maybe only CONFIRMED or COMPLETED

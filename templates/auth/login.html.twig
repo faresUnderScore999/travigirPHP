@@ -1,29 +1,374 @@
 {% extends 'base.html.twig' %}
-
 {% block title %}Login | Travagir{% endblock %}
 
 {% block body %}
-    <section class="auth-section">
-        <h1>Login</h1>
-        <p class="lead">Sign in to continue with your travel planning.</p>
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <span class="logo-icon">✈</span>
+                    <span class="logo-text">Travagir</span>
+                </div>
+                <h1>Welcome back</h1>
+                <p class="lead">Sign in to continue your journey</p>
+            </div>
 
-        <div class="auth-container">
-            <form class="contact-form" method="post" action="{{ path('auth_login') }}">
+            <form class="auth-form" method="post" action="{{ path('auth_login') }}">
                 {% if error %}
-                    <p class="error-message">{{ error }}</p>
+                <div class="alert alert-error">
+                    <span class="alert-icon">⚠</span>
+                    {{ error }}
+                </div>
                 {% endif %}
 
-                <label>Email
-                    <input type="email" name="email" value="{{ email }}" placeholder="you@example.com" required>
-                </label>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉</span>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            value="{{ email }}"
+                            placeholder="you@example.com" 
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+                </div>
 
-                <label>Password
-                    <input type="password" name="password" placeholder="********" required>
-                </label>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Enter your password" 
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+                </div>
 
-                <button type="submit" class="btn btn-primary">Login</button>
-                <p class="meta">Demo credentials: user2@example.com / password2</p>
+                <div class="form-actions">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    Sign In
+                </button>
             </form>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="{{ path('auth_register') }}">Create one</a></p>
+            </div>
+
+            <div class="demo-credentials">
+                <p><strong>Demo Credentials:</strong></p>
+                <p>Email: <code>user2@example.com</code></p>
+                <p>Password: <code>password2</code></p>
+            </div>
         </div>
-    </section>
+
+        <div class="auth-visual">
+            <div class="visual-content">
+                <h2>Explore the World</h2>
+                <p>Discover amazing destinations and create unforgettable memories with Travagir.</p>
+                <div class="visual-features">
+                    <div class="feature">
+                        <span>🏖️</span>
+                        <span>Beach Destinations</span>
+                    </div>
+                    <div class="feature">
+                        <span>🏔️</span>
+                        <span>Mountain Adventures</span>
+                    </div>
+                    <div class="feature">
+                        <span>🌆</span>
+                        <span>City Explorations</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.auth-page {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, rgba(15, 23, 34, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+}
+
+.auth-container {
+    display: flex;
+    max-width: 1000px;
+    width: 100%;
+    background: var(--amazon-white);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.auth-card {
+    flex: 1;
+    padding: 48px 40px;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.auth-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.logo-icon {
+    font-size: 2rem;
+    color: var(--amazon-orange);
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.auth-header h1 {
+    font-size: 1.75rem;
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+}
+
+.auth-header .lead {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Form Styles */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--text-muted);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 14px 14px 14px 44px;
+    border: 2px solid var(--border-dark);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: var(--amazon-white);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: var(--amazon-orange);
+    box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.15);
+}
+
+.input-wrapper input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.remember-me input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--amazon-orange);
+}
+
+.forgot-link {
+    color: var(--amazon-orange);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+/* Button */
+.btn-block {
+    width: 100%;
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+/* Footer */
+.auth-footer {
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-dark);
+    color: var(--text-muted);
+}
+
+.auth-footer a {
+    color: var(--amazon-orange);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Demo Credentials */
+.demo-credentials {
+    margin-top: 24px;
+    padding: 16px;
+    background: rgba(255, 153, 0, 0.1);
+    border-radius: 12px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.demo-credentials p {
+    margin: 4px 0;
+}
+
+.demo-credentials code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: var(--text-primary);
+}
+
+/* Visual Side */
+.auth-visual {
+    flex: 1;
+    background: linear-gradient(135deg, var(--amazon-orange) 0%, #ff6b35 100%);
+    padding: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.visual-content {
+    color: white;
+    text-align: center;
+}
+
+.visual-content h2 {
+    font-size: 2rem;
+    margin: 0 0 16px 0;
+}
+
+.visual-content p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0 0 32px 0;
+}
+
+.visual-features {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* Alert */
+.alert-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 12px;
+    color: #ef4444;
+    font-size: 0.9rem;
+}
+
+.alert-icon {
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .auth-container {
+        flex-direction: column;
+    }
+    
+    .auth-visual {
+        display: none;
+    }
+    
+    .auth-card {
+        padding: 32px 24px;
+    }
+}
+</style>
 {% endblock %}
