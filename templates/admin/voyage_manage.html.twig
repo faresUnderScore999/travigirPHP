@@ -1,0 +1,400 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Manage {{ voyage.title }} | Admin{% endblock %}
+
+{% block body %}
+<div class="admin-page">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Manage: {{ voyage.title }}</h1>
+            <p class="lead">{{ voyage.destination }} | ${{ voyage.price|number_format(2) }}</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ path('admin_voyages') }}" class="btn btn-secondary">← Back to Voyages</a>
+            <a href="{{ path('admin_voyage_edit', {id: voyage.id}) }}" class="btn btn-primary">Edit Voyage</a>
+        </div>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-error">{{ message }}</div>
+    {% endfor %}
+
+    <!-- Voyage Info -->
+    <div class="voyage-info-card">
+        <div class="info-header">
+            <h2>Voyage Information</h2>
+        </div>
+        <div class="info-content">
+            <div class="info-row">
+                <span class="info-label">Destination:</span>
+                <span class="info-value">{{ voyage.destination }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Start Date:</span>
+                <span class="info-value">{{ voyage.start_date }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">End Date:</span>
+                <span class="info-value">{{ voyage.end_date }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Price:</span>
+                <span class="info-value">${{ voyage.price|number_format(2) }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Description:</span>
+                <span class="info-value">{{ voyage.description }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offers Section -->
+    <section class="management-section">
+        <div class="section-header">
+            <h2>🎯 Offers</h2>
+            <a href="{{ path('admin_offer_new') }}?voyage_id={{ voyage.id }}" class="btn btn-sm btn-primary">➕ Add Offer</a>
+        </div>
+        
+        {% if offers|length > 0 %}
+        <div class="items-grid">
+            {% for offer in offers %}
+            <div class="item-card">
+                <div class="item-header">
+                    <h3>{{ offer.title }}</h3>
+                    <span class="badge {{ offer.is_active ? 'active' : 'inactive' }}">{{ offer.is_active ? 'Active' : 'Inactive' }}</span>
+                </div>
+                <p class="item-description">{{ offer.description }}</p>
+                <div class="item-meta">
+                    <span class="discount">{{ offer.discount_percentage }}% OFF</span>
+                    <span>{{ offer.start_date }} - {{ offer.end_date }}</span>
+                </div>
+                <div class="item-actions">
+                    <a href="{{ path('admin_offer_edit', {id: offer.id}) }}" class="btn btn-sm btn-edit">Edit</a>
+                    <a href="{{ path('admin_offer_delete', {id: offer.id}) }}" class="btn btn-sm btn-delete" onclick="return confirm('Delete this offer?');">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">No offers yet. <a href="{{ path('admin_offer_new') }}?voyage_id={{ voyage.id }}">Add one now!</a></p>
+        {% endif %}
+    </section>
+
+    <!-- Activities Section -->
+    <section class="management-section">
+        <div class="section-header">
+            <h2>🎪 Activities / Events</h2>
+            <a href="{{ path('admin_activity_new') }}?voyage_id={{ voyage.id }}" class="btn btn-sm btn-primary">➕ Add Activity</a>
+        </div>
+        
+        {% if activities|length > 0 %}
+        <div class="items-grid">
+            {% for activity in activities %}
+            <div class="item-card">
+                <div class="item-header">
+                    <h3>{{ activity.name }}</h3>
+                </div>
+                <p class="item-description">{{ activity.description }}</p>
+                <div class="item-meta">
+                    <span>⏱️ {{ activity.duration_hours }} hours</span>
+                    <span>${{ activity.price_per_person|number_format(2) }}/person</span>
+                </div>
+                <div class="item-actions">
+                    <a href="{{ path('admin_activity_edit', {id: activity.id}) }}" class="btn btn-sm btn-edit">Edit</a>
+                    <a href="{{ path('admin_activity_delete', {id: activity.id}) }}" class="btn btn-sm btn-delete" onclick="return confirm('Delete this activity?');">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">No activities yet. <a href="{{ path('admin_activity_new') }}?voyage_id={{ voyage.id }}">Add one now!</a></p>
+        {% endif %}
+    </section>
+
+    <!-- Images Section -->
+    <section class="management-section">
+        <div class="section-header">
+            <h2>🖼️ Images</h2>
+            <a href="{{ path('admin_image_new') }}?voyage_id={{ voyage.id }}" class="btn btn-sm btn-primary">➕ Add Image</a>
+        </div>
+        
+        {% if images|length > 0 %}
+        <div class="images-grid">
+            {% for image in images %}
+            <div class="image-card">
+                <img src="{{ image.image_url }}" alt="Voyage image">
+                <div class="image-actions">
+                    <a href="{{ path('admin_image_edit', {id: image.id}) }}" class="btn btn-sm btn-edit">Edit</a>
+                    <a href="{{ path('admin_image_delete', {id: image.id}) }}" class="btn btn-sm btn-delete" onclick="return confirm('Delete this image?');">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">No images yet. <a href="{{ path('admin_image_new') }}?voyage_id={{ voyage.id }}">Add one now!</a></p>
+        {% endif %}
+    </section>
+</div>
+
+<style>
+.admin-page {
+    padding: 30px 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.page-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 2rem;
+}
+
+.page-header .lead {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.btn-primary {
+    background: var(--amazon-orange);
+    color: #000;
+}
+
+.btn-secondary {
+    background: var(--amazon-white);
+    color: var(--text-primary);
+    border: 1px solid var(--border-dark);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.btn-edit {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-delete {
+    background: #ef4444;
+    color: white;
+}
+
+.alert {
+    padding: 14px 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.alert-success {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid #22c55e;
+    color: #22c55e;
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+
+/* Voyage Info Card */
+.voyage-info-card {
+    background: var(--amazon-white);
+    border: 1px solid var(--border-dark);
+    border-radius: 12px;
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.info-header {
+    background: rgba(15, 23, 34, 0.5);
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.info-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.info-content {
+    padding: 20px 24px;
+}
+
+.info-row {
+    display: flex;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    width: 150px;
+    color: var(--text-muted);
+}
+
+.info-value {
+    flex: 1;
+}
+
+/* Management Sections */
+.management-section {
+    background: var(--amazon-white);
+    border: 1px solid var(--border-dark);
+    border-radius: 12px;
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: rgba(15, 23, 34, 0.5);
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 24px;
+}
+
+.item-card {
+    background: rgba(15, 23, 34, 0.5);
+    border: 1px solid var(--border-dark);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.item-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.badge.inactive {
+    background: rgba(107, 114, 128, 0.2);
+    color: #6b7280;
+}
+
+.item-description {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+
+.item-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+.discount {
+    color: #22c55e;
+    font-weight: 700;
+}
+
+.item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Images Grid */
+.images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 24px;
+}
+
+.image-card {
+    background: rgba(15, 23, 34, 0.5);
+    border: 1px solid var(--border-dark);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.image-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.image-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+}
+
+.empty-state {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-state a {
+    color: var(--amazon-orange);
+}
+</style>
+{% endblock %}
