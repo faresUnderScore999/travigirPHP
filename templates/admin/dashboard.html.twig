@@ -85,15 +85,25 @@
                 <span class="action-title">Manage Reservations</span>
                 <span class="action-desc">Review and process booking requests</span>
             </a>
-            <a href="{{ path('travel_voyages') }}" class="action-card">
-                <span class="action-icon">🌍</span>
-                <span class="action-title">View Voyages</span>
-                <span class="action-desc">Browse all available travel packages</span>
+            <a href="{{ path('admin_voyages') }}" class="action-card">
+                <span class="action-icon">✈️</span>
+                <span class="action-title">Manage Voyages</span>
+                <span class="action-desc">Create, edit, and delete travel packages</span>
             </a>
-            <a href="{{ path('travel_offers') }}" class="action-card">
+            <a href="{{ path('admin_offers') }}" class="action-card">
                 <span class="action-icon">🏷️</span>
-                <span class="action-title">View Offers</span>
-                <span class="action-desc">Check current promotional deals</span>
+                <span class="action-title">Manage Offers</span>
+                <span class="action-desc">Create and manage promotional deals</span>
+            </a>
+            <a href="{{ path('admin_activities') }}" class="action-card">
+                <span class="action-icon">🎯</span>
+                <span class="action-title">Manage Activities</span>
+                <span class="action-desc">Create and manage voyage activities</span>
+            </a>
+            <a href="{{ path('admin_images') }}" class="action-card">
+                <span class="action-icon">🖼️</span>
+                <span class="action-title">Manage Images</span>
+                <span class="action-desc">Upload and manage voyage images</span>
             </a>
         </div>
     </section>
