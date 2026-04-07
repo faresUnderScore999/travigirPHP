@@ -6,6 +6,7 @@ use App\Entity\Voyage;
 use App\Repository\VoyageImageRepository;
 use App\Repository\VoyageRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 
 class VoyageService
 {
@@ -13,6 +14,7 @@ class VoyageService
         private readonly VoyageRepository $voyageRepository,
         private readonly VoyageImageRepository $voyageImageRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
     
@@ -217,28 +219,56 @@ class VoyageService
         return null;
     }
 
-    private function mapVoyage(object $voyage): array
-    {
-        // Fetch images from voyage_images table
-        $images = $this->voyageImageRepository->findByVoyageId($voyage->getId());
+private function mapVoyage(object $voyage): array
+{
+    // Fetch images from voyage_images table
+    $images = $this->voyageImageRepository->findByVoyageId($voyage->getId());
 
-        $imageUrls = array_map(function ($image) {
-            // Handle both VoyageImage objects and plain arrays (from getDefaultImages)
-            if (is_array($image)) {
-                return $image['imageUrl'] ?? '';
-            }
-            return $image->getImageUrl();
-        }, $images);
+    $imageUrls = array_map(function ($image) {
+        // Handle both VoyageImage objects and plain arrays (from getDefaultImages)
+        if (is_array($image)) {
+            return $image['imageUrl'] ?? '';
+        }
+        return $image->getImageUrl();
+    }, $images);
 
-        return [
-            'id' => $voyage->getId(),
-            'title' => $voyage->getTitle(),
-            'description' => $voyage->getDescription(),
-            'destination' => $voyage->getDestination(),
-            'start_date' => $voyage->getStartDate()?->format('Y-m-d'),
-            'end_date' => $voyage->getEndDate()?->format('Y-m-d'),
-            'price' => $voyage->getPrice(),
-            'image_url' => $imageUrls,
-        ];
+    return [
+        'id' => $voyage->getId(),
+        'title' => $voyage->getTitle(),
+        'description' => $voyage->getDescription(),
+        'destination' => $voyage->getDestination(),
+        'start_date' => $voyage->getStartDate()?->format('Y-m-d'),
+        'end_date' => $voyage->getEndDate()?->format('Y-m-d'),
+        'price' => $voyage->getPrice(),
+        'image_url' => $imageUrls,
+    ];
+}
+
+/**
+ * Search voyages with filters
+ */
+public function searchVoyages(array $filters): array
+{
+    try {
+        $this->logger?->info('Searching voyages with filters', $filters);
+        $voyages = $this->voyageRepository->search($filters);
+        return array_map(fn ($voyage) => $this->mapVoyage($voyage), $voyages);
+    } catch (\Throwable $e) {
+        $this->logger?->error('Error searching voyages', ['error' => $e->getMessage()]);
+        return [];
     }
+}
+
+/**
+ * Count search results
+ */
+public function countSearchResults(array $filters): int
+{
+    try {
+        return $this->voyageRepository->countSearch($filters);
+    } catch (\Throwable $e) {
+        $this->logger?->error('Error counting search results', ['error' => $e->getMessage()]);
+        return 0;
+    }
+}
 }
