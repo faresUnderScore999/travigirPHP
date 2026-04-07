@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Service\VoyageService;
 use App\Service\OfferService;
 use App\Utility\DatabaseInitializer;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,8 @@ class VoyageController extends AbstractController
     public function __construct(
         private readonly VoyageService $voyageService,
         private readonly OfferService $offerService,
-        private readonly DatabaseInitializer $databaseInitializer
+        private readonly DatabaseInitializer $databaseInitializer,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -30,23 +32,59 @@ class VoyageController extends AbstractController
         ]);
     }
 
-    #[Route('/voyages', name: 'travel_voyages', methods: ['GET'])]
-    public function voyages(Request $request): Response
-    {
-        $page = $request->query->getInt('page', 1);
-        $limit = 12;
-
+#[Route('/voyages', name: 'travel_voyages', methods: ['GET'])]
+public function voyages(Request $request): Response
+{
+    $page = $request->query->getInt('page', 1);
+    $limit = 12;
+    
+    // Get search and filter parameters
+    $search = $request->query->get('search', '');
+    $minPrice = $request->query->get('min_price');
+    $maxPrice = $request->query->get('max_price');
+    $sortBy = $request->query->get('sort_by', 'startDate');
+    $sortOrder = $request->query->get('sort_order', 'ASC');
+    
+    $filters = [
+        'sort_by' => $sortBy,
+        'sort_order' => $sortOrder,
+        'limit' => $limit,
+        'offset' => ($page - 1) * $limit,
+    ];
+    
+    // Build search filters
+    if (!empty($search)) {
+        $filters['destination'] = $search;
+        $filters['title'] = $search;
+    }
+    if (!empty($minPrice)) {
+        $filters['min_price'] = $minPrice;
+    }
+    if (!empty($maxPrice)) {
+        $filters['max_price'] = $maxPrice;
+    }
+    
+    // Use search if filters are applied
+    if (!empty($search) || !empty($minPrice) || !empty($maxPrice)) {
+        $this->logger?->info('Public searching voyages', $filters);
+        $voyages = $this->voyageService->searchVoyages($filters);
+        $totalVoyages = $this->voyageService->countSearchResults($filters);
+    } else {
         $voyages = $this->voyageService->getVoyages($page, $limit);
         $totalVoyages = $this->voyageService->getTotalVoyages();
-        $totalPages = ceil($totalVoyages / $limit) ?: 1;
-
-        return $this->render('travel/voyages.html.twig', [
-            'active_nav' => 'voyages',
-            'voyages' => $voyages,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
-        ]);
     }
+    
+    $totalPages = ceil($totalVoyages / $limit) ?: 1;
+
+    return $this->render('travel/voyages.html.twig', [
+        'active_nav' => 'voyages',
+        'voyages' => $voyages,
+        'current_page' => $page,
+        'total_pages' => $totalPages,
+        'search' => $search,
+        'filters' => $filters,
+    ]);
+}
 
     #[Route('/voyages/{id}', name: 'travel_voyage_detail', requirements: ['id' => '\\d+'], methods: ['GET'])]
     public function voyageDetail(int $id): Response

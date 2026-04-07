@@ -6,7 +6,9 @@ use App\Service\VoyageService;
 use App\Service\OfferService;
 use App\Service\ActivityService;
 use App\Service\VoyageImageService;
+use App\Service\ValidationService;
 use App\Repository\VoyageRepository;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,40 +23,99 @@ class AdminController extends AbstractController
         private ActivityService $activityService,
         private VoyageImageService $voyageImageService,
         private VoyageRepository $voyageRepository,
+        private ValidationService $validationService,
+        private ?LoggerInterface $logger = null,
     ) {}
 
-    // ==================== VOYAGES ====================
+// ==================== VOYAGES ====================
+
+#[Route('/voyages', name: 'admin_voyages', methods: ['GET'])]
+public function voyages(Request $request): Response
+{
+    $search = $request->query->get('search', '');
+    $minPrice = $request->query->get('min_price');
+    $maxPrice = $request->query->get('max_price');
+    $startDateFrom = $request->query->get('start_date_from');
+    $startDateTo = $request->query->get('start_date_to');
+    $sortBy = $request->query->get('sort_by', 'startDate');
+    $sortOrder = $request->query->get('sort_order', 'ASC');
     
-    #[Route('/voyages', name: 'admin_voyages', methods: ['GET'])]
-    public function voyages(): Response
-    {
+    $filters = [];
+    
+    // Build search filters
+    if (!empty($search)) {
+        $filters['title'] = $search;
+        $filters['destination'] = $search;
+    }
+    if (!empty($minPrice)) {
+        $filters['min_price'] = $minPrice;
+    }
+    if (!empty($maxPrice)) {
+        $filters['max_price'] = $maxPrice;
+    }
+    if (!empty($startDateFrom)) {
+        $filters['start_date_from'] = $startDateFrom;
+    }
+    if (!empty($startDateTo)) {
+        $filters['start_date_to'] = $startDateTo;
+    }
+    $filters['sort_by'] = $sortBy;
+    $filters['sort_order'] = $sortOrder;
+    
+    // Use search if filters are applied, otherwise get all
+    if (!empty($search) || !empty($minPrice) || !empty($maxPrice) || !empty($startDateFrom) || !empty($startDateTo)) {
+        $this->logger?->info('Admin searching voyages', $filters);
+        $voyages = $this->voyageService->searchVoyages($filters);
+    } else {
         $voyages = $this->voyageService->getAllVoyagesForAdmin();
-        return $this->render('admin/voyages.html.twig', [
-            'voyages' => $voyages,
-        ]);
+    }
+    
+    return $this->render('admin/voyages.html.twig', [
+        'voyages' => $voyages,
+        'search' => $search,
+        'filters' => $filters,
+    ]);
+}
+
+#[Route('/voyages/new', name: 'admin_voyage_new', methods: ['GET', 'POST'])]
+public function newVoyage(Request $request): Response
+{
+    if ($request->isMethod('POST')) {
+        $data = $request->request->all();
+        $imageUrl = $data['image_url'] ?? [];
+        if (is_string($imageUrl)) {
+            $imageUrl = array_filter(array_map('trim', explode("\n", $imageUrl)));
+        }
+        $data['image_url'] = $imageUrl;
+
+        // Validate voyage data
+        $this->validationService->validateVoyage($data);
+        
+        if (!$this->validationService->isValid()) {
+            $this->logger?->warning('Validation failed for new voyage', $this->validationService->getErrors());
+            foreach ($this->validationService->getErrors() as $field => $errors) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', $error);
+                }
+            }
+            return $this->render('admin/voyage_form.html.twig', [
+                'voyage' => $data,
+                'voyages' => $this->voyageRepository->findAll(),
+                'errors' => $this->validationService->getErrors(),
+            ]);
+        }
+
+        $this->logger?->info('Creating new voyage', ['title' => $data['title'] ?? '']);
+        $voyage = $this->voyageService->createVoyage($data);
+        $this->addFlash('success', 'Voyage created successfully!');
+        return $this->redirectToRoute('admin_voyages');
     }
 
-    #[Route('/voyages/new', name: 'admin_voyage_new', methods: ['GET', 'POST'])]
-    public function newVoyage(Request $request): Response
-    {
-        if ($request->isMethod('POST')) {
-            $data = $request->request->all();
-            $imageUrl = $data['image_url'] ?? [];
-            if (is_string($imageUrl)) {
-                $imageUrl = array_filter(array_map('trim', explode("\n", $imageUrl)));
-            }
-            $data['image_url'] = $imageUrl;
-            
-            $voyage = $this->voyageService->createVoyage($data);
-            $this->addFlash('success', 'Voyage created successfully!');
-            return $this->redirectToRoute('admin_voyages');
-        }
-        
-        return $this->render('admin/voyage_form.html.twig', [
-            'voyage' => null,
-            'voyages' => $this->voyageRepository->findAll(),
-        ]);
-    }
+    return $this->render('admin/voyage_form.html.twig', [
+        'voyage' => null,
+        'voyages' => $this->voyageRepository->findAll(),
+    ]);
+}
 
     #[Route('/voyages/{id}/manage', name: 'admin_voyage_manage', methods: ['GET'])]
     public function manageVoyage(int $id): Response
