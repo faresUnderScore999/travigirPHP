@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"version":1,"defects":{"App\\Tests\\Service\\AuthServiceTest::testAdminAuthentication":8,"App\\Tests\\Service\\AuthServiceTest::testUserAuthentication":8},"times":{"App\\Tests\\Entity\\VoyageTest::testGettersAndSetters":0.709,"App\\Tests\\Service\\AuthServiceTest::testAdminAuthentication":2.346,"App\\Tests\\Service\\AuthServiceTest::testUserAuthentication":0.568}}
+=======
+{"version":1,"defects":{"App\\Tests\\Service\\AuthServiceTest::testAdminAuthentication":8,"App\\Tests\\Service\\AuthServiceTest::testUserAuthentication":8},"times":{"App\\Tests\\Entity\\VoyageTest::testGettersAndSetters":0.006,"App\\Tests\\Service\\AuthServiceTest::testAdminAuthentication":0.774,"App\\Tests\\Service\\AuthServiceTest::testUserAuthentication":0.695}}
+>>>>>>> 4ecfe974c163ec97a8f570f6649ac6198a7bc83e
