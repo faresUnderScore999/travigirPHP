@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{% if offer %}Edit Offer{% else %}New Offer{% endif %} | Admin{% endblock %}
+{% block title %}{% if offer is not null and offer.id is defined %}Edit Offer{% else %}New Offer{% endif %} | Admin{% endblock %}
 
 {% block body %}
 <div class="admin-page">
     <div class="page-header">
         <div class="header-content">
-            <h1>{% if offer %}Edit Offer{% else %}Create New Offer{% endif %}</h1>
-            <p class="lead">{% if offer %}Update offer details{% else %}Add a new promotional offer{% endif %}</p>
+            <h1>{% if offer is not null and offer.id is defined %}Edit Offer{% else %}Create New Offer{% endif %}</h1>
+            <p class="lead">{% if offer is not null and offer.id is defined %}Update offer details{% else %}Add a new promotional offer{% endif %}</p>
         </div>
         <div class="header-actions">
             <a href="{{ path('admin_offers') }}" class="btn btn-secondary">
@@ -17,13 +17,25 @@
     </div>
 
     <div class="form-container">
+        {% if errors is defined and errors|length > 0 %}
+            <div class="alert alert-error" role="alert">
+                <strong>Please fix the following:</strong>
+                <ul class="mb-0 mt-2">
+                    {% for fieldErrors in errors %}
+                        {% for message in fieldErrors %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
         <form method="post" class="admin-form">
             <div class="form-group">
                 <label for="voyage_id">Voyage *</label>
                 <select id="voyage_id" name="voyage_id" required class="form-control">
                     <option value="">Select a voyage</option>
                     {% for v in voyages %}
-                        <option value="{{ v.id }}" {% if offer and offer.voyage_id == v.id %}selected{% endif %}>
+                        <option value="{{ v.id }}" {% if offer is not null and offer.voyage_id == v.id %}selected{% endif %}>
                             {{ v.title }} - {{ v.destination }}
                         </option>
                     {% endfor %}
@@ -42,31 +54,32 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="discount_percentage">Discount Percentage (%)</label>
-                    <input type="number" id="discount_percentage" name="discount_percentage" value="{{ offer.discount_percentage|default('') }}" step="0.01" min="0" max="100" class="form-control">
+                    <label for="discount_percentage">Discount Percentage (%) *</label>
+                    <input type="number" id="discount_percentage" name="discount_percentage" value="{{ offer.discount_percentage|default('') }}" step="0.01" min="0" max="100" required class="form-control">
                 </div>
 
                 <div class="form-group">
-                    <label for="start_date">Start Date</label>
-                    <input type="date" id="start_date" name="start_date" value="{{ offer.start_date|default('') }}" class="form-control">
+                    <label for="start_date">Start Date *</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ offer.start_date|default('') }}" required class="form-control">
                 </div>
 
                 <div class="form-group">
-                    <label for="end_date">End Date</label>
-                    <input type="date" id="end_date" name="end_date" value="{{ offer.end_date|default('') }}" class="form-control">
+                    <label for="end_date">End Date *</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ offer.end_date|default('') }}" required class="form-control">
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" name="is_active" value="1" {% if offer is null or offer.is_active %}checked{% endif %}>
-                    <span>Active</span>
+                    <input type="hidden" name="is_active" value="0">
+                    <input type="checkbox" name="is_active" value="1" {% if offer is null or (offer.is_active is defined and offer.is_active) %}checked{% endif %}>
+                    <span>Active *</span>
                 </label>
             </div>
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
-                    {% if offer %}Update Offer{% else %}Create Offer{% endif %}
+                    {% if offer is not null and offer.id is defined %}Update Offer{% else %}Create Offer{% endif %}
                 </button>
                 <a href="{{ path('admin_offers') }}" class="btn btn-secondary">Cancel</a>
             </div>
@@ -211,5 +224,21 @@ select.form-control {
     padding-top: 20px;
     border-top: 1px solid var(--border-dark);
 }
+
+.alert {
+    padding: 14px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+
+.alert-error ul {
+    padding-left: 1.25rem;
+}
 </style>
-{% endblock %}
+{% endblock %}g²i

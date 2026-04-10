@@ -197,8 +197,19 @@ public function newVoyage(Request $request): Response
     {
         if ($request->isMethod('POST')) {
             $data = $request->request->all();
-            $data['is_active'] = $request->request->get('is_active', '1') === '1';
-            
+            $data['is_active'] = $request->request->get('is_active') === '1';
+
+            $this->validationService->validateOffer($data);
+            if (!$this->validationService->isValid()) {
+                $this->logger?->warning('Offer validation failed', $this->validationService->getErrors());
+
+                return $this->render('admin/offer_form.html.twig', [
+                    'offer' => $this->offerFormStateFromRequest($data),
+                    'voyages' => $this->voyageRepository->findAll(),
+                    'errors' => $this->validationService->getErrors(),
+                ]);
+            }
+
             $offer = $this->offerService->createOffer($data);
             if ($offer) {
                 $this->addFlash('success', 'Offer created successfully!');
@@ -207,7 +218,7 @@ public function newVoyage(Request $request): Response
             }
             return $this->redirectToRoute('admin_offers');
         }
-        
+
         return $this->render('admin/offer_form.html.twig', [
             'offer' => null,
             'voyages' => $this->voyageRepository->findAll(),
@@ -225,17 +236,52 @@ public function newVoyage(Request $request): Response
         
         if ($request->isMethod('POST')) {
             $data = $request->request->all();
-            $data['is_active'] = $request->request->get('is_active', '1') === '1';
-            
+            $data['is_active'] = $request->request->get('is_active') === '1';
+
+            $this->validationService->validateOffer($data);
+            if (!$this->validationService->isValid()) {
+                $this->logger?->warning('Offer validation failed', $this->validationService->getErrors());
+
+                return $this->render('admin/offer_form.html.twig', [
+                    'offer' => $this->offerFormStateFromRequest($data, $offer),
+                    'voyages' => $this->voyageRepository->findAll(),
+                    'errors' => $this->validationService->getErrors(),
+                ]);
+            }
+
             $this->offerService->updateOffer($id, $data);
             $this->addFlash('success', 'Offer updated successfully!');
             return $this->redirectToRoute('admin_offers');
         }
-        
+
         return $this->render('admin/offer_form.html.twig', [
             'offer' => $offer,
             'voyages' => $this->voyageRepository->findAll(),
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed>|null $existing From getOfferByIdForAdmin when editing
+     *
+     * @return array<string, mixed>
+     */
+    private function offerFormStateFromRequest(array $data, ?array $existing = null): array
+    {
+        $state = [
+            'voyage_id' => isset($data['voyage_id']) && $data['voyage_id'] !== '' ? (int) $data['voyage_id'] : null,
+            'title' => (string) ($data['title'] ?? ''),
+            'description' => array_key_exists('description', $data) ? (string) $data['description'] : (string) ($existing['description'] ?? ''),
+            'discount_percentage' => $data['discount_percentage'] ?? '',
+            'start_date' => (string) ($data['start_date'] ?? ''),
+            'end_date' => (string) ($data['end_date'] ?? ''),
+            'is_active' => ($data['is_active'] ?? false) === true || ($data['is_active'] ?? '') === '1',
+        ];
+        if ($existing !== null && isset($existing['id'])) {
+            $state['id'] = $existing['id'];
+        }
+
+        return $state;
     }
 
     #[Route('/offers/{id}/delete', name: 'admin_offer_delete', methods: ['GET', 'POST'])]
