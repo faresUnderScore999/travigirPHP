@@ -19,7 +19,11 @@
         "symfony/yaml": "6.4.*"
     },
     "require-dev": {
-        "symfony/maker-bundle": "^1.67"
+        "phpunit/phpunit": "10.0",
+        "symfony/browser-kit": "6.4.*",
+        "symfony/css-selector": "6.4.*",
+        "symfony/maker-bundle": "^1.67",
+        "symfony/phpunit-bridge": "^8.0"
     },
     "config": {
         "allow-plugins": {
