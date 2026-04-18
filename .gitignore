@@ -10,3 +10,13 @@
 /vendor/
 /.d41d8cd9.env
 ###< symfony/framework-bundle ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.result.cache
+/.phpunit.cache/
+###< phpunit/phpunit ###
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###
