@@ -69,6 +69,14 @@
             </div>
             <a href="{{ path('travel_voyages') }}" class="stat-link">View All →</a>
         </div>
+        <div class="stat-card stat-refunds">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ stats.pending_refunds }}</span>
+                <span class="stat-label">Pending Refunds</span>
+            </div>
+            <a href="{{ path('admin_refunds') }}" class="stat-link">View All →</a>
+        </div>
     </div>
 
     <!-- Quick Actions -->
@@ -104,6 +112,11 @@
                 <span class="action-icon">🖼️</span>
                 <span class="action-title">Manage Images</span>
                 <span class="action-desc">Upload and manage voyage images</span>
+                <a href="{{ path('admin_refunds') }}" class="action-card">
+                <span class="action-icon">💰</span>
+                <span class="action-title">Manage Refunds</span>
+                <span class="action-desc">Review and process refund requests</span>
+            </a>
             </a>
         </div>
     </section>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #17a2b8; color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+        .detail-box { background: white; border-radius: 6px; padding: 20px; margin: 20px 0; border-left: 4px solid #17a2b8; }
+        .detail-item { margin: 10px 0; font-size: 15px; }
+        .label { font-weight: bold; color: #17a2b8; }
+        .amount { font-size: 20px; font-weight: bold; color: #17a2b8; }
+        .footer { text-align: center; color: #999; font-size: 12px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Refund Request Received</h1>
+        </div>
+        <div class="content">
+            <p>Hello <strong>{{ userName }}</strong>,</p>
+            <p>We have received your refund request. Here are the details:</p>
+
+            <div class="detail-box">
+                <div class="detail-item">
+                    <span class="label">Voyage:</span> {{ voyageTitle }}
+                </div>
+                <div class="detail-item">
+                    <span class="label">Amount:</span>
+                    <span class="amount">{{ amount|number_format(2, '.', ',') }} TND</span>
+                </div>
+            </div>
+
+            <p>Our team will review your request within <strong>2-3 business days</strong>.</p>
+            <p>— The Travigir Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated email. Please do not reply directly to this message.</p>
+        </div>
+    </div>
+</body>
+</html>

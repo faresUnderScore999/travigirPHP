@@ -1,0 +1,106 @@
+{% extends 'base.html.twig' %}
+{% block title %}Refund Requests | Travagir{% endblock %}
+
+{% block body %}
+<div class="reservations-page">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Refund Requests</h1>
+            <p class="lead">Review and manage user refund requests.</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-pill pending">
+                <span class="stat-count">{{ refunds|filter(r => r.status == 'PENDING')|length }}</span>
+                <span class="stat-label">Pending</span>
+            </div>
+        </div>
+    </div>
+
+    {% if refunds is empty %}
+    <div class="empty-state">
+        <span class="empty-icon">💰</span>
+        <h3>No refund requests</h3>
+        <p>There are no refund requests to display.</p>
+    </div>
+    {% else %}
+    <div class="table-container">
+        <table class="reservations-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for refund in refunds %}
+                <tr>
+                    <td class="cell-id">#{{ refund.id }}</td>
+                    <td class="cell-user">
+                        <div class="user-info">
+                            <strong>{{ refund.user_name }}</strong>
+                            <span>{{ refund.user_email }}</span>
+                        </div>
+                    </td>
+                    <td class="cell-price">${{ refund.amount|number_format(2, '.', ',') }}</td>
+                    <td>{{ refund.reason }}</td>
+                    <td>
+                        <span class="status-badge status-{{ refund.status|lower }}">{{ refund.status }}</span>
+                    </td>
+                    <td class="cell-date">
+                        <span class="date-main">{{ refund.created_at|date('d M Y') }}</span>
+                        <span class="date-time">{{ refund.created_at|date('H:i') }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="page-footer">
+        <a href="{{ path('admin_dashboard') }}" class="back-link">← Back to Admin Dashboard</a>
+    </div>
+</div>
+
+<style>
+.reservations-page { padding: 30px 20px; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; flex-wrap: wrap; gap: 20px; }
+.page-header h1 { margin: 0 0 8px 0; font-size: 2rem; }
+.page-header .lead { margin: 0; color: var(--text-muted); }
+.header-stats { display: flex; gap: 12px; }
+.stat-pill { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 20px; background: var(--amazon-white); border: 1px solid var(--border-dark); }
+.stat-pill.pending { border-color: rgba(255, 193, 7, 0.4); }
+.stat-count { font-size: 1.2rem; font-weight: 800; }
+.stat-pill.pending .stat-count { color: #ffc107; }
+.stat-label { font-size: 0.85rem; color: var(--text-muted); }
+.empty-state { text-align: center; padding: 60px 20px; background: var(--amazon-white); border: 1px solid var(--border-dark); border-radius: 16px; }
+.empty-icon { font-size: 4rem; display: block; margin-bottom: 16px; }
+.empty-state h3 { margin: 0 0 8px 0; }
+.empty-state p { color: var(--text-muted); margin: 0; }
+.table-container { overflow-x: auto; background: var(--amazon-white); border: 1px solid var(--border-dark); border-radius: 16px; }
+.reservations-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+.reservations-table th { text-align: left; padding: 16px; background: rgba(15, 23, 34, 0.5); color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-dark); }
+.reservations-table td { padding: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); vertical-align: middle; }
+.reservations-table tbody tr:hover { background: rgba(255, 153, 0, 0.05); }
+.reservations-table tbody tr:last-child td { border-bottom: none; }
+.cell-id { font-weight: 700; color: var(--amazon-orange); font-family: monospace; }
+.user-info { display: flex; flex-direction: column; gap: 2px; }
+.user-info strong { color: var(--text-primary); font-size: 0.95rem; }
+.user-info span { color: var(--text-muted); font-size: 0.8rem; }
+.cell-price { font-weight: 700; color: var(--amazon-orange); font-size: 1.05rem; }
+.status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+.status-pending { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+.status-approved { background: rgba(22, 163, 74, 0.2); color: #22c55e; }
+.status-rejected { background: rgba(220, 38, 38, 0.2); color: #ef4444; }
+.cell-date { white-space: nowrap; }
+.date-main { display: block; color: var(--text-primary); font-weight: 500; }
+.date-time { display: block; color: var(--text-muted); font-size: 0.8rem; }
+.page-footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-dark); }
+.back-link { color: var(--text-muted); text-decoration: none; font-weight: 500; }
+.back-link:hover { color: var(--amazon-orange); }
+</style>
+{% endblock %}

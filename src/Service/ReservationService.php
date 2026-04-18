@@ -238,4 +238,20 @@ SQL;
             return false;
         }
     }
+    public function getAllRefundRequests(): array
+{
+    $sql = <<<'SQL'
+SELECT rr.*, u.username AS user_name, u.email AS user_email
+FROM refund_requests rr
+JOIN users u ON u.id = rr.requester_id
+ORDER BY rr.created_at DESC
+SQL;
+    return $this->connection->fetchAllAssociative($sql);
+}
+public function countPendingRefunds(): int
+{
+    return (int) $this->connection->fetchOne(
+        "SELECT COUNT(*) FROM refund_requests WHERE status = 'PENDING'"
+    );
+}
 }

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Service\ReservationService;
 use App\Service\VoyageService;
 use App\Service\OfferService;
+use App\Service\MailerService;
 use App\Utility\DatabaseInitializer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,7 +18,8 @@ class ReservationController extends AbstractController
         private readonly ReservationService $reservationService,
         private readonly VoyageService $voyageService,
         private readonly OfferService $offerService,
-        private readonly DatabaseInitializer $databaseInitializer
+        private readonly DatabaseInitializer $databaseInitializer,
+        private readonly MailerService $mailerService
     ) {}
 
     #[Route('/voyages/{id}/reserve', name: 'travel_voyage_reserve', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
@@ -45,8 +47,6 @@ class ReservationController extends AbstractController
 
         if ($request->isMethod('POST')) {
 
-
-
             $numberOfPeople = (int) $request->request->get('number_of_people', 1);
 
             if ($numberOfPeople < 1 || $numberOfPeople > 20) {
@@ -72,21 +72,30 @@ class ReservationController extends AbstractController
                     throw new \Exception('Creation failed');
                 }
 
+                try {
+                    $this->mailerService->sendReservationConfirmation(
+                        $user['email'],
+                        $user['username'],
+                        $voyage['title'],
+                        $voyage['destination'],
+                        $numberOfPeople,
+                        $totalPrice,
+                        (new \DateTime())->format('Y-m-d H:i:s')
+                    );
+                } catch (\Throwable $e) {}
+
                 $this->addFlash('success', 'Reservation created successfully');
             } catch (\Throwable $e) {
                 $this->addFlash('error', $e->getMessage());
-    
             }
 
             return $this->redirectToRoute('travel_voyage_reserve', ['id' => $id]);
         }
 
-
         return $this->render('travel/reserve.html.twig', [
             'active_nav' => 'voyages',
             'voyage' => $voyage,
             'offer' => $activeOffer,
-           
         ]);
     }
 
@@ -149,6 +158,17 @@ class ReservationController extends AbstractController
         }
 
         if ($this->reservationService->confirmReservationAsAdmin($id)) {
+            $res = $this->reservationService->getReservationByIdAdmin($id);
+            if ($res) {
+                try {
+                    $this->mailerService->sendAdminConfirmation(
+                        $res['user_email'],
+                        $res['user_name'],
+                        $res['voyage_title'],
+                        $res['destination']
+                    );
+                } catch (\Throwable $e) {}
+            }
             $this->addFlash('success', 'Reservation confirmed successfully.');
         } else {
             $this->addFlash('error', 'Unable to confirm reservation.');
@@ -181,7 +201,6 @@ class ReservationController extends AbstractController
             return $this->redirectToRoute('auth_login');
         }
 
-        // Admin can view any reservation, regular users can only view their own
         $isAdmin = $user['is_admin'] ?? false;
         if ($isAdmin) {
             $reservation = $this->reservationService->getReservationByIdAdmin($id);
@@ -208,6 +227,13 @@ class ReservationController extends AbstractController
 
             if ($request->request->has('action_cancel')) {
                 if ($this->reservationService->cancelReservation($id, $user['id'])) {
+                    try {
+                        $this->mailerService->sendReservationCancellation(
+                            $user['email'],
+                            $user['username'],
+                            $reservation['voyage_title']
+                        );
+                    } catch (\Throwable $e) {}
                     $this->addFlash('success', 'Reservation successfully cancelled.');
                     return $this->redirectToRoute('account_bookings');
                 } else {
@@ -221,6 +247,14 @@ class ReservationController extends AbstractController
                     $error = 'Refund reason is required.';
                 } else {
                     if ($this->reservationService->requestRefund($id, $user['id'], $reason)) {
+                        try {
+                            $this->mailerService->sendRefundReceived(
+                                $user['email'],
+                                $user['username'],
+                                $reservation['voyage_title'],
+                                (float) $reservation['total_price']
+                            );
+                        } catch (\Throwable $e) {}
                         $success = 'Refund request submitted and awaiting admin review.';
                     } else {
                         $error = 'Unable to submit refund request. Please review reservation status and try again.';
@@ -229,12 +263,26 @@ class ReservationController extends AbstractController
             }
         }
 
-    return $this->render('travel/reservation_detail.html.twig', [
-        'active_nav' => 'account',
-        'reservation' => $reservation,
-        'error' => $error,
-        'success' => $success,
-        'is_admin_view' => $isAdmin,
-    ]);
+        return $this->render('travel/reservation_detail.html.twig', [
+            'active_nav' => 'account',
+            'reservation' => $reservation,
+            'error' => $error,
+            'success' => $success,
+            'is_admin_view' => $isAdmin,
+        ]);
     }
+    #[Route('/admin/refunds', name: 'admin_refunds', methods: ['GET'])]
+public function adminRefunds(Request $request): Response
+{
+    if ($this->ensureAdmin($request) !== null) {
+        return $this->ensureAdmin($request);
+    }
+
+    $refunds = $this->reservationService->getAllRefundRequests();
+
+    return $this->render('travel/admin_refunds.html.twig', [
+        'active_nav' => 'account',
+        'refunds' => $refunds,
+    ]);
+}
 }

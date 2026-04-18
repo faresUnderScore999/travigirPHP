@@ -82,6 +82,7 @@ class UserController extends AbstractController
         $cancelledReservations = count(array_filter($reservations, fn($r) => $r['status'] === 'CANCELLED'));
         $totalRevenue = array_sum(array_map(fn($r) => (float) ($r['total_price'] ?? 0), $reservations));
         $totalVoyages = count($voyages);
+        $pendingRefunds = $this->reservationService->countPendingRefunds();
         
         // Get recent reservations (last 5)
         $recentReservations = array_slice($reservations, 0, 5);
@@ -99,6 +100,7 @@ class UserController extends AbstractController
                 'cancelled_reservations' => $cancelledReservations,
                 'total_revenue' => $totalRevenue,
                 'total_voyages' => $totalVoyages,
+                'pending_refunds' => $pendingRefunds, 
             ],
             'recent_reservations' => $recentReservations,
             'recent_users' => $recentUsers,
