@@ -20,6 +20,7 @@
                 <a class="{{ active_nav|default('') == 'home' ? 'active' : '' }}" href="{{ path('travel_home') }}">Home</a>
                 <a class="{{ active_nav|default('') == 'voyages' ? 'active' : '' }}" href="{{ path('travel_voyages') }}">Voyages</a>
                 <a class="{{ active_nav|default('') == 'offers' ? 'active' : '' }}" href="{{ path('travel_offers') }}">Offers</a>
+                <a class="{{ active_nav|default('') == 'trip-planner' ? 'active' : '' }}" href="{{ path('trip_planner') }}">🤖 Trip Planner</a>
                 <a class="{{ active_nav|default('') == 'contact' ? 'active' : '' }}" href="{{ path('travel_contact') }}">Contact</a>
                 {% if app.session.get('auth_user') %}
                     <div class="account-dropdown">
@@ -38,6 +39,7 @@
                             {% if authUser is defined and authUser is not empty and authUser.is_admin|default(false) %}
                                 <a href="{{ path('admin_dashboard') }}" class="account-link">Admin Dashboard</a>
                                 <a href="{{ path('admin_users') }}" class="account-link">Manage Users</a>
+                                <a href="{{ path('admin_ai_assistant') }}" class="account-link">🤖 AI Assistant</a>
                                 <a href="{{ path('admin_reservations') }}" class="account-link">Manage Reservations</a>
                             {% endif %}
                             <hr>
