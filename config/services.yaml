@@ -41,5 +41,12 @@ services:
             $apiKey:    '%env(string:CLOUDINARY_API_KEY)%'
             $apiSecret: '%env(string:CLOUDINARY_API_SECRET)%'
 
+    App\Service\AiVoyageService:
+        arguments:
+            $apiUrl:  '%env(string:AI_API_URL)%'
+            $apiKey:  '%env(string:AI_API_KEY)%'
+            $model:   '%env(string:AI_MODEL)%'
+            $enabled: '%env(bool:AI_SUGGESTION_ENABLED)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
