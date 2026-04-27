@@ -1,3 +1,3 @@
 
-SELECT * from voyage_visits ;
 
+SELECT * from voyage_visits ;

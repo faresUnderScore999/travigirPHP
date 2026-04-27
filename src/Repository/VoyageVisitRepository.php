@@ -212,4 +212,30 @@ public function findPaginatedWithNames(int $offset, int $limit): array
         ->getQuery()
         ->getResult();
 }
+
+public function getSourceBreakdown(): array
+{
+    return $this->createQueryBuilder('vv')
+        ->select('vv.source, COUNT(vv.id) as cnt')
+        ->groupBy('vv.source')
+        ->orderBy('cnt', 'DESC')
+        ->getQuery()
+        ->getResult();
+}
+
+public function getVisitsByDay(int $days = 30): array
+{
+    $conn = $this->getEntityManager()->getConnection();
+    $since = (new \DateTime("-{$days} days"))->format('Y-m-d');
+    $sql = 'SELECT DATE(visit_time) as day, COUNT(id) as cnt FROM voyage_visits WHERE visit_time >= :since GROUP BY DATE(visit_time) ORDER BY day ASC';
+    return $conn->executeQuery($sql, ['since' => $since])->fetchAllAssociative();
+}
+
+public function getTotalVisits(): int
+{
+    return (int) $this->createQueryBuilder('vv')
+        ->select('COUNT(vv.id)')
+        ->getQuery()
+        ->getSingleScalarResult();
+}
 }
