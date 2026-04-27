@@ -295,6 +295,33 @@ public function listAllReservations(): array
         }
     }
 
+    public function markAsPaid(int $reservationId, int $userId): bool
+    {
+        try {
+            $reservation = $this->reservationRepository->find($reservationId);
+            if (!$reservation || $reservation->getUserId() !== $userId) {
+                return false;
+            }
+
+            if ($reservation->getPaymentStatus() === 'PAID') {
+                return true;
+            }
+
+            $reservation->setPaymentStatus('PAID');
+            $reservation->setPaymentDate(new \DateTime());
+            $reservation->setStatus('CONFIRMED');
+            $reservation->setUpdatedAt(new \DateTime());
+
+            $entityManager = $this->reservationRepository->getEntityManager();
+            $entityManager->flush();
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to mark reservation as paid', ['error' => $e->getMessage(), 'reservation_id' => $reservationId]);
+            return false;
+        }
+    }
+
     /**
      * Convert Reservation entity to array with basic fields
      */

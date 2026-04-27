@@ -25,11 +25,21 @@
                       
 
                             <div><strong>People</strong><br>{{ reservation.number_of_people }}</div>
-                            <div><strong>Total</strong><br>${{ reservation.total_price|number_format(2, '.', ',') }}</div>
+                            <div><strong>Total</strong><br>{{ reservation.total_price|number_format(2, '.', ',') }} TND</div>
+                            <div>
+                                <strong>Payment</strong><br>
+                                <span class="status status-{{ reservation.payment_status|lower }}">{{ reservation.payment_status }}</span>
+                            </div>
                         </div>
 
                         <div class="card-footer">
                             <a href="{{ path('account_reservation_detail', {id: reservation.id}) }}" class="btn btn-primary">Details</a>
+                            {% if reservation.payment_status != 'PAID' and reservation.status not in ['CANCELLED'] %}
+                                <form method="post" action="{{ path('payment_initiate', {id: reservation.id}) }}" class="inline-form">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('payment_initiate_' ~ reservation.id) }}">
+                                    <button type="submit" class="btn btn-success">Pay Now</button>
+                                </form>
+                            {% endif %}
                             {% if reservation.status == 'PENDING' or reservation.status == 'CONFIRMED' %}
                                 <form method="post" action="{{ path('account_reservation_detail', {id: reservation.id}) }}" class="inline-form">
                                     <button type="submit" name="action_cancel" class="btn btn-danger">Cancel</button>

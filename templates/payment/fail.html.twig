@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Payment Failed | Travagir{% endblock %}
+
+{% block body %}
+    <section class="payment-result">
+        <div class="payment-result-card fail">
+            <div class="payment-result-icon">&#10007;</div>
+            <h1>Payment Failed</h1>
+            <p>Your payment could not be processed. Your reservation is still saved — you can try again at any time.</p>
+
+            <div class="payment-result-actions">
+                <a href="{{ path('account_reservation_detail', {id: reservation_id}) }}" class="btn btn-primary">
+                    Try Again
+                </a>
+                <a href="{{ path('account_bookings') }}" class="btn btn-secondary">
+                    My Bookings
+                </a>
+            </div>
+        </div>
+    </section>
+{% endblock %}

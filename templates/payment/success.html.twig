@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Payment Successful | Travagir{% endblock %}
+
+{% block body %}
+    <section class="payment-result">
+        <div class="payment-result-card success">
+            <div class="payment-result-icon">&#10003;</div>
+            <h1>Payment Successful!</h1>
+            <p>Your payment has been confirmed and your reservation is now active.</p>
+
+            <div class="payment-details">
+                <p><strong>Reservation #:</strong> {{ reservation_id }}</p>
+                <p><strong>Payment ID:</strong> {{ payment_id }}</p>
+            </div>
+
+            <div class="payment-result-actions">
+                <a href="{{ path('account_reservation_detail', {id: reservation_id}) }}" class="btn btn-primary">
+                    View Reservation
+                </a>
+                <a href="{{ path('account_bookings') }}" class="btn btn-secondary">
+                    My Bookings
+                </a>
+            </div>
+        </div>
+    </section>
+{% endblock %}

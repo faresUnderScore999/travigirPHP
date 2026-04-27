@@ -48,7 +48,11 @@
 				<div>
 					<strong>People</strong><br>{{ reservation.number_of_people }}</div>
 				<div>
-					<strong>Total Price</strong><br>${{ reservation.total_price|number_format(2, '.', ',') }}</div>
+					<strong>Total Price</strong><br>{{ reservation.total_price|number_format(2, '.', ',') }} TND</div>
+				<div>
+					<strong>Payment</strong><br>
+					<span class="status status-{{ reservation.payment_status|lower }}">{{ reservation.payment_status }}</span>
+				</div>
 			</div>
 
 			<div class="reservation-actions">
@@ -78,6 +82,14 @@
 				{% endif %}
 				{# Add link for users to create a reclamation related to this reservation #}
 				{% if not is_admin_view %}
+					{% if reservation.payment_status != 'PAID' and reservation.status not in ['CANCELLED'] %}
+						<form method="post" action="{{ path('payment_initiate', {id: reservation.id}) }}" class="inline-form">
+							<input type="hidden" name="_csrf_token" value="{{ csrf_token('payment_initiate_' ~ reservation.id) }}">
+							<button type="submit" class="btn btn-success">Pay Now ({{ reservation.total_price|number_format(2, '.', ',') }} TND)</button>
+						</form>
+					{% elseif reservation.payment_status == 'PAID' %}
+						<span class="badge badge-success">Paid on {{ reservation.payment_date ? reservation.payment_date|date('d M Y') : '' }}</span>
+					{% endif %}
 					<a href="{{ path('user_reclamation_new') }}?reservation_id={{ reservation.id }}" class="btn btn-primary mt-2">Add Reclamation</a>
 				{% endif %}
 			</div>
