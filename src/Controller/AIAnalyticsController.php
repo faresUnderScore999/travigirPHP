@@ -261,13 +261,13 @@ PROMPT;
                 return $this->json(['error' => 'No response from AI'], 500);
             }
             if ($choice && !isset($choice['tool_calls']) && isset($choice['content'])) {
-    $fakeToolCalls = $this->extractToolCallFromContent($choice['content']);
-    if ($fakeToolCalls) {
-        // Replace content with empty string and inject tool_calls
-        $choice['tool_calls'] = $fakeToolCalls;
-        $choice['content'] = '';
-    }
-}
+                $fakeToolCalls = $this->extractToolCallFromContent($choice['content']);
+                if ($fakeToolCalls) {
+                    // Replace content with empty string and inject tool_calls
+                    $choice['tool_calls'] = $fakeToolCalls;
+                    $choice['content'] = '';
+                }
+            }
 
             // If AI wants to call a tool, execute and append result
             if (isset($choice['tool_calls'])) {
@@ -443,41 +443,41 @@ PROMPT;
         return implode("\n", $lines);
     }
     /**
- * If the AI's content looks like a tool call JSON, parse it and return an array
- * that mimics the standard tool_calls structure.
- */
-private function extractToolCallFromContent(string $content): ?array
-{
-    // Look for JSON containing "tool_calls"
-    if (preg_match('/\{(?:[^{}]|(?R))*\}/s', $content, $match)) {
-        $decoded = json_decode($match[0], true);
-        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['tool_calls'])) {
-            // Normalize to the format our loop expects
-            return $decoded['tool_calls'];
+     * If the AI's content looks like a tool call JSON, parse it and return an array
+     * that mimics the standard tool_calls structure.
+     */
+    private function extractToolCallFromContent(string $content): ?array
+    {
+        // Look for JSON containing "tool_calls"
+        if (preg_match('/\{(?:[^{}]|(?R))*\}/s', $content, $match)) {
+            $decoded = json_decode($match[0], true);
+            if (json_last_error() === JSON_ERROR_NONE && isset($decoded['tool_calls'])) {
+                // Normalize to the format our loop expects
+                return $decoded['tool_calls'];
+            }
         }
-    }
-    // Also try to extract a function call like: get_voyage_details(9)
-    if (preg_match('/(\w+)\(([^)]+)\)/', $content, $matches)) {
-        $funcName = $matches[1];
-        $argsRaw = $matches[2];
-        // Simple argument parsing (supports quoted strings and numbers)
-        $args = [];
-        if (is_numeric($argsRaw)) {
-            $args = ['identifier' => $argsRaw];
-        } elseif (preg_match('/[\'"](\d+)[\'"]/', $argsRaw, $idMatch)) {
-            $args = ['identifier' => $idMatch[1]];
-        } elseif (preg_match('/[\'"]([^\'"]+)[\'"]/', $argsRaw, $strMatch)) {
-            $args = ['identifier' => $strMatch[1]];
+        // Also try to extract a function call like: get_voyage_details(9)
+        if (preg_match('/(\w+)\(([^)]+)\)/', $content, $matches)) {
+            $funcName = $matches[1];
+            $argsRaw = $matches[2];
+            // Simple argument parsing (supports quoted strings and numbers)
+            $args = [];
+            if (is_numeric($argsRaw)) {
+                $args = ['identifier' => $argsRaw];
+            } elseif (preg_match('/[\'"](\d+)[\'"]/', $argsRaw, $idMatch)) {
+                $args = ['identifier' => $idMatch[1]];
+            } elseif (preg_match('/[\'"]([^\'"]+)[\'"]/', $argsRaw, $strMatch)) {
+                $args = ['identifier' => $strMatch[1]];
+            }
+            return [[
+                'id'   => 'fallback_' . uniqid(),
+                'type' => 'function',
+                'function' => [
+                    'name' => $funcName,
+                    'arguments' => json_encode($args)
+                ]
+            ]];
         }
-        return [[
-            'id'   => 'fallback_' . uniqid(),
-            'type' => 'function',
-            'function' => [
-                'name' => $funcName,
-                'arguments' => json_encode($args)
-            ]
-        ]];
+        return null;
     }
-    return null;
-}
 }
