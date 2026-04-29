@@ -4,6 +4,18 @@
 
 *, *::before, *::after {
   box-sizing: border-box;
+  /* GPU-accelerate nothing by default — only opt-in below */
+}
+
+/* Promote animated elements to their own compositor layers */
+.card, .offer, .btn, .btn-login, .btn-register,
+nav a, .account-dropdown, .logo {
+  will-change: transform;
+}
+
+/* Contain layout thrash on isolated components */
+.card, .offer {
+  contain: layout style;
 }
 
 /* Custom scrollbar */
@@ -58,7 +70,13 @@ body {
   background: var(--amazon-light);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  animation: pageFadeIn .3s ease;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  animation: pageFadeIn .25s ease both;
+  /* prevent layout shift on scroll */
+  overflow-x: hidden;
+  /* smoother scrolling */
+  scroll-behavior: smooth;
 }
 
 @keyframes pageFadeIn {
@@ -69,6 +87,13 @@ body {
 a {
   color: var(--amazon-orange-soft);
   text-decoration: none;
+}
+
+/* lazy-load images — decode off main thread */
+img {
+  loading: lazy;
+  decoding: async;
+  content-visibility: auto;
 }
 
 .container {

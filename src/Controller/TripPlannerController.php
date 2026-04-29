@@ -22,9 +22,7 @@ class TripPlannerController extends AbstractController
     #[Route('/trip-planner', name: 'trip_planner', methods: ['GET'])]
     public function index(): Response
     {
-        return $this->render('travel/trip_planner.html.twig', [
-            'active_nav' => 'trip-planner',
-        ]);
+        return $this->redirectToRoute('travel_home');
     }
 
     #[Route('/trip-planner/plan', name: 'trip_planner_plan', methods: ['POST'])]
