@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # For this repo: PHP + Twig templates are covered by CodeQL "php"
+        # For this repo: CodeQL is configured to analyze PHP sources; Twig templates are not explicitly covered here.
         language: [ "php" ]
 
     steps:
