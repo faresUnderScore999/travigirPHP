@@ -51,9 +51,12 @@
   color: var(--text-muted);
 }
 
-/* Offer hover effect */
+/* Offer hover effect — compositor-only (no layout/paint) */
+.offer, .card {
+  transition: transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .28s ease, border-color .2s ease;
+}
 .offer:hover, .card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-6px) translateZ(0);
   box-shadow: 0 26px 46px rgba(0, 0, 0, 0.45);
   border-color: var(--amazon-orange);
 }

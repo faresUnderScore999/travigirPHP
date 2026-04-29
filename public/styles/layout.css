@@ -4,11 +4,16 @@
 
 /* Site Header */
 .site-header {
-  background: #0f1722;
   border-bottom: 1px solid var(--border-dark);
   position: sticky;
   top: 0;
   z-index: 20;
+  transform: translateZ(0);
+  will-change: transform;
+  contain: layout style paint;
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  background: rgba(15, 23, 34, 0.88);
 }
 
 .nav-wrap {
