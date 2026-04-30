@@ -10,7 +10,7 @@
   z-index: 20;
   transform: translateZ(0);
   will-change: transform;
-  contain: layout style paint;
+  contain: layout style;
   backdrop-filter: blur(14px) saturate(1.5);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   background: rgba(15, 23, 34, 0.88);
