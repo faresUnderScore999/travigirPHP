@@ -7,8 +7,23 @@
   border-bottom: 1px solid var(--border-dark);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 9000;
   background: rgba(15, 23, 34, 0.88);
+}
+
+/* menus are portalled to <body> by JS — these rules position them */
+.account-menu.portalled,
+.lang-menu.portalled {
+  position: fixed !important;
+  z-index: 99999 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  display: none;
+}
+.account-menu.portalled.open,
+.lang-menu.portalled.open {
+  display: block;
 }
 
 /* blur via pseudo-element so the header doesn't create a stacking context */
@@ -130,15 +145,11 @@ nav a.active, nav a:hover {
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.2s ease;
-  z-index: 1000;
+  z-index: 99999;
   margin-top: 8px;
 }
 
-.account-dropdown:hover .account-menu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
+/* dropdown open state handled by JS portal */
 
 .account-info {
   padding: 16px;

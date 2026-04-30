@@ -123,39 +123,59 @@
             document.body.classList.toggle('nav-open', nav.classList.contains('active'));
         }
 
-        // Account Menu Toggle (for mobile touch devices)
-        function toggleAccountMenu() {
-            const dropdown = document.querySelector('.account-dropdown');
-            dropdown.classList.toggle('active');
-        }
-
         // Close mobile menu when clicking outside
         document.addEventListener('click', function(event) {
-            const nav = document.getElementById('mainNav');
+            const nav    = document.getElementById('mainNav');
             const toggle = document.querySelector('.mobile-nav-toggle');
-            const accountDropdown = document.querySelector('.account-dropdown');
-
-            if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+            if (nav && toggle && !nav.contains(event.target) && !toggle.contains(event.target)) {
                 nav.classList.remove('active');
                 document.body.classList.remove('nav-open');
             }
-
-            if (accountDropdown && !accountDropdown.contains(event.target)) {
-                accountDropdown.classList.remove('active');
-            }
         });
 
-        // Handle window resize
         window.addEventListener('resize', function() {
             const nav = document.getElementById('mainNav');
-            const accountDropdown = document.querySelector('.account-dropdown');
+            if (window.innerWidth > 768 && nav) nav.classList.remove('active');
+        });
 
-            if (window.innerWidth > 768) {
-                nav.classList.remove('active');
-                if (accountDropdown) {
-                    accountDropdown.classList.remove('active');
+        // Portal: move menus to <body> so they escape the header's stacking context
+        document.addEventListener('DOMContentLoaded', function () {
+            function makePortal(btnEl, menuEl) {
+                if (!btnEl || !menuEl) return;
+                // Move to body
+                menuEl.style.position   = 'fixed';
+                menuEl.style.zIndex     = '99999';
+                menuEl.style.opacity    = '1';
+                menuEl.style.visibility = 'visible';
+                menuEl.style.transform  = 'none';
+                menuEl.style.display    = 'none';
+                menuEl.style.marginTop  = '0';
+                document.body.appendChild(menuEl);
+
+                function place() {
+                    var r   = btnEl.getBoundingClientRect();
+                    var w   = menuEl.offsetWidth || 220;
+                    var left = r.right - w;
+                    menuEl.style.top   = (r.bottom + 6) + 'px';
+                    menuEl.style.left  = Math.max(8, Math.min(left, window.innerWidth - w - 8)) + 'px';
+                    menuEl.style.right = 'auto';
                 }
+                function open()  { menuEl.style.display = 'block'; place(); }
+                function close() { menuEl.style.display = 'none'; }
+
+                btnEl.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    menuEl.style.display === 'none' ? open() : close();
+                });
+                document.addEventListener('click', function (e) {
+                    if (!menuEl.contains(e.target) && e.target !== btnEl) close();
+                });
+                window.addEventListener('scroll', close, { passive: true });
+                window.addEventListener('resize', function () { close(); }, { passive: true });
             }
+
+            makePortal(document.querySelector('.account-btn'),  document.querySelector('.account-menu'));
+            makePortal(document.getElementById('langToggle'),   document.getElementById('langMenu'));
         });
     </script>
 
@@ -204,21 +224,7 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            var toggle = document.getElementById('langToggle');
-            var menu   = document.getElementById('langMenu');
-
-            toggle.addEventListener('click', function (e) {
-                e.stopPropagation();
-                menu.classList.toggle('open');
-            });
-
-            document.addEventListener('click', function (e) {
-                if (!document.getElementById('langPicker').contains(e.target)) {
-                    menu.classList.remove('open');
-                }
-            });
-        });
+        // lang menu open/close handled by makePortal above
     </script>
     <script async src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
@@ -2409,7 +2415,7 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             padding: 6px;
-            z-index: 200;
+            z-index: 99999;
             min-width: 170px;
             box-shadow: 0 12px 32px rgba(0,0,0,.55);
             gap: 2px;
