@@ -8,9 +8,17 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  background: rgba(15, 23, 34, 0.88);
+}
+
+/* blur via pseudo-element so the header doesn't create a stacking context */
+.site-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
   backdrop-filter: blur(14px) saturate(1.5);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
-  background: rgba(15, 23, 34, 0.88);
+  z-index: -1;
 }
 
 .nav-wrap {
