@@ -178,9 +178,9 @@
                     <button class="btn btn-fav {% if is_favorite %}btn-fav-active{% endif %}" id="favBtn" onclick="toggleFavorite({{ voyage.id }})" title="{% if is_favorite %}Remove from favorites{% else %}Add to favorites{% endif %}">
                         {{ is_favorite ? '♥ Saved' : '♡ Save' }}
                     </button>
-                    <button class="btn btn-compare {% if voyage.id in compare_list %}cmp-active{% endif %}" id="cmpBtn" onclick="toggleCompare({{ voyage.id }})" title="{% if voyage.id in compare_list %}Remove from comparison{% else %}Add to comparison{% endif %}">
-                        {{ voyage.id in compare_list ? '✓ In Compare' : '⊕ Compare' }}
-                    </button>
+                    <a href="{{ path('compare_pick', {id: voyage.id}) }}" class="btn btn-compare" title="Compare with another voyage">
+                        ⊕ Compare
+                    </a>
                     <a class="btn btn-secondary btn-back" href="{{ path('travel_voyages') }}">
                         <span class="btn-text">Back to voyages</span>
                     </a>
