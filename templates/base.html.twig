@@ -1699,13 +1699,23 @@
       const isMobile = window.innerWidth <= 768;
       const BOT_W = isMobile ? 80 : 110;
       const BOT_H = isMobile ? 110 : 150;
-      let posX = window.innerWidth  - BOT_W - 16;
-      let posY = window.innerHeight - BOT_H - 24;
+      const BOT_MARGIN_X = isMobile ? 12 : 24;
+      const BOT_MARGIN_Y = isMobile ? 20 : 24;
+
+      let posX = window.innerWidth  - BOT_W - BOT_MARGIN_X;
+      let posY = window.innerHeight - BOT_H - BOT_MARGIN_Y;
       let dragging = false, dragOffX = 0, dragOffY = 0;
       let roaming = false, roamTimer = null, roamRAF = null;
       let bubbleTimer = null;
+      let userHasDragged = false; // track manual drag so we can snap back on scroll
 
       function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+      function snapToDefault() {
+        posX = window.innerWidth  - BOT_W - BOT_MARGIN_X;
+        posY = window.innerHeight - BOT_H - BOT_MARGIN_Y;
+      }
+
       function applyPos() {
         posX = clamp(posX, 8, window.innerWidth  - BOT_W - 8);
         posY = clamp(posY, 8, window.innerHeight - BOT_H - 8);
@@ -1713,6 +1723,13 @@
         bot.style.right = 'auto'; bot.style.bottom = 'auto';
       }
       applyPos();
+
+      // Re-anchor to bottom-right on scroll (handles mobile URL-bar collapse)
+      window.addEventListener('scroll', function () {
+        if (!dragging && !userHasDragged && !roaming) {
+          snapToDefault(); applyPos(); positionChat();
+        }
+      }, { passive: true });
 
       function showBubble(text, ms) {
         clearTimeout(bubbleTimer);
@@ -1739,7 +1756,7 @@
       /* drag */
       bot.addEventListener('mousedown', e => {
         if (e.target.closest('.gb-cycle-btn')) return;
-        dragging = true; stopRoaming();
+        dragging = true; userHasDragged = true; stopRoaming();
         dragOffX = e.clientX - posX; dragOffY = e.clientY - posY;
         bot.style.cursor = 'grabbing'; bot.style.animation = 'none';
         bubble.classList.remove('visible');
@@ -1770,7 +1787,7 @@
       /* ── Touch drag ── */
       bot.addEventListener('touchstart', e => {
         if (e.target.closest('.gb-cycle-btn')) return;
-        dragging = true; stopRoaming();
+        dragging = true; userHasDragged = true; stopRoaming();
         const t = e.touches[0];
         dragOffX = t.clientX - posX; dragOffY = t.clientY - posY;
         bot.style.animation = 'none';
@@ -2066,7 +2083,10 @@
         });
       }, { passive: true });
 
-      window.addEventListener('resize', () => { applyPos(); }, { passive: true });
+      window.addEventListener('resize', () => {
+        if (!userHasDragged) snapToDefault();
+        applyPos(); positionChat();
+      }, { passive: true });
 
       /* pause canvas work when tab is hidden */
       document.addEventListener('visibilitychange', () => {
