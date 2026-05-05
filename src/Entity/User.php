@@ -15,7 +15,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;// @phpstan-ignore property.unusedType
+    private ?int $id = null;
 
     #[ORM\Column(length: 50)]
     private string $username = '';
@@ -49,7 +49,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // On garantit que chaque utilisateur possède au moins ROLE_USER
+        // On garantit que chaque utilisateur possأ¨de au moins ROLE_USER
         $roles[] = 'ROLE_USER';
 
         return array_unique($roles);
@@ -62,7 +62,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * Sert à effacer des données sensibles temporaires (souvent vide)
+     * Sert أ  effacer des donnأ©es sensibles temporaires (souvent vide)
      */
     public function eraseCredentials(): void
     {
@@ -142,3 +142,4 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 }
+

@@ -97,13 +97,10 @@ class ReclamationController extends AbstractController
             }
 
             // If no errors so far, attempt to create the reclamation
-            if (!isset($error)) {
-                $reclamation = $this->reclamationService->createReclamation($data);
-                if ($reclamation) {
-                    $this->addFlash('success', 'Reclamation submitted successfully.');
-                    return $this->redirectToRoute('user_reclamations');
-                }
-                $error = ['general' => ['Unable to create reclamation.']];
+            if ($error === null) {
+                $this->reclamationService->createReclamation($data);
+                $this->addFlash('success', 'Reclamation submitted successfully.');
+                return $this->redirectToRoute('user_reclamations');
             }
         }
         return $this->render('reclamation/form.html.twig', [

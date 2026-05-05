@@ -4,13 +4,15 @@ namespace App\Service;
 
 use App\Repository\UserRepository;
 use App\Repository\AdminRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 class AuthService
 {
     public function __construct(
         private readonly UserRepository $userRepository,
-         private readonly AdminRepository $adminRepository, 
+        private readonly AdminRepository $adminRepository,
+        private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -137,9 +139,8 @@ class AuthService
         $user->setPassword($plainPassword); // setPassword() now hashes automatically
         $user->setCreatedAt(new \DateTime());
 
-            $entityManager = $this->userRepository->getEntityManager();
-            $entityManager->persist($user);
-            $entityManager->flush();
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
 
             return [
                 'id' => $user->getId(),
@@ -243,8 +244,7 @@ public function getUserByEmail(string $email): ?array
     }
 
         try {
-            $entityManager = $this->userRepository->getEntityManager();
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             return [
                 'id' => $user->getId(),
@@ -283,9 +283,8 @@ public function getUserByEmail(string $email): ?array
         }
 
         try {
-            $entityManager = $this->userRepository->getEntityManager();
-            $entityManager->remove($user);
-            $entityManager->flush();
+            $this->entityManager->remove($user);
+            $this->entityManager->flush();
             return true;
         } catch (\Throwable $e) {
             $this->logger->error('Failed to delete user', ['user_id' => $userId, 'error' => $e->getMessage()]);

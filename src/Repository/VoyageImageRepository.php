@@ -24,12 +24,39 @@ class VoyageImageRepository extends ServiceEntityRepository
    public function findByVoyageId(int $voyageId): array
     {
         $images = $this->findBy(['voyageId' => $voyageId]);
-        
+
         if (empty($images)) {
             return $this->getDefaultImages();
         }
-        
+
         return $images;
+    }
+
+    /**
+     * Load images for multiple voyages in a single query (avoids N+1).
+     * Returns a map of voyageId => VoyageImage[].
+     *
+     * @param int[] $voyageIds
+     * @return array<int, VoyageImage[]>
+     */
+    public function findByVoyageIds(array $voyageIds): array
+    {
+        if (empty($voyageIds)) {
+            return [];
+        }
+
+        $images = $this->createQueryBuilder('vi')
+            ->where('vi.voyageId IN (:ids)')
+            ->setParameter('ids', $voyageIds)
+            ->getQuery()
+            ->getResult();
+
+        $map = [];
+        foreach ($images as $image) {
+            $map[$image->getVoyageId()][] = $image;
+        }
+
+        return $map;
     }
 
     /**
