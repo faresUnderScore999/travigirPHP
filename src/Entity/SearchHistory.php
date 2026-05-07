@@ -12,7 +12,7 @@ class SearchHistory
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;// @phpstan-ignore property.unusedType
+    private ?int $id = null;
 
     #[ORM\Column(name: 'user_id')]
     private int $userId = 0;
@@ -94,3 +94,4 @@ class SearchHistory
         return $this;
     }
 }
+

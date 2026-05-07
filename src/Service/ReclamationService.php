@@ -13,8 +13,8 @@ class ReclamationService
     public function __construct(
         private readonly ReclamationRepository $reclamationRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly AuthService $authService,
         private readonly ?LoggerInterface $logger = null,
-        private readonly AuthService $authService
     ) {
     }
 

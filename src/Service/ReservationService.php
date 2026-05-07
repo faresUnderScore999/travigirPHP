@@ -7,6 +7,7 @@ use App\Repository\ReservationRepository;
 use App\Service\RefundRequestService;
 use App\Repository\VoyageRepository;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 class ReservationService
@@ -16,6 +17,7 @@ class ReservationService
         private readonly VoyageRepository $voyageRepository,
         private readonly UserRepository $userRepository,
         private readonly RefundRequestService $refundRequestService,
+        private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -60,9 +62,8 @@ class ReservationService
             $reservation->setReservationDate(new \DateTime());
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->reservationRepository->getEntityManager();
-            $entityManager->persist($reservation);
-            $entityManager->flush();
+            $this->entityManager->persist($reservation);
+            $this->entityManager->flush();
 
             return $this->getReservationById($reservation->getId(), $userId);
         } catch (\Throwable $e) {
@@ -129,8 +130,7 @@ class ReservationService
             $reservation->setStatus('CANCELLED');
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->reservationRepository->getEntityManager();
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             return true;
         } catch (\Throwable $e) {
@@ -152,8 +152,7 @@ class ReservationService
             $reservation->setPaymentDate(new \DateTime());
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->reservationRepository->getEntityManager();
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             return true;
         } catch (\Throwable $e) {
@@ -178,8 +177,7 @@ class ReservationService
             $reservation->setStatus('CANCELLED');
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->reservationRepository->getEntityManager();
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             return true;
         } catch (\Throwable $e) {
@@ -238,8 +236,7 @@ public function listAllReservations(): array
             $reservation->setPaymentDate(new \DateTime());
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->reservationRepository->getEntityManager();
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             return true;
         } catch (\Throwable $e) {
@@ -283,12 +280,7 @@ public function listAllReservations(): array
         'amount' => $reservation->getTotalPrice(),
         'reason' => $reason,
     ]);
-            if (!$refundRequest) {
-                $this->logger->error('Failed to create refund request', ['reservation_id' => $reservationId, 'user_id' => $userId]);
-                return false;
-            }
-
-              return $refundRequest !== null;
+            return true;
         } catch (\Throwable $e) {
             $this->logger->error('Failed to request refund', ['error' => $e->getMessage(), 'reservation_id' => $reservationId, 'user_id' => $userId]);
             return false;
