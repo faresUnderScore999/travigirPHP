@@ -3,12 +3,16 @@
 namespace App\Service;
 
 use App\Entity\Reservation;
+use App\Entity\RefundRequest;
+use App\Entity\Reclamation;
 use App\Repository\ReservationRepository;
 use App\Service\RefundRequestService;
+use App\Service\LoyaltyPointsService;
 use App\Repository\VoyageRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 class ReservationService
 {
@@ -17,9 +21,54 @@ class ReservationService
         private readonly VoyageRepository $voyageRepository,
         private readonly UserRepository $userRepository,
         private readonly RefundRequestService $refundRequestService,
+        private readonly LoyaltyPointsService $loyaltyPointsService,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger
     ) {
+    }
+
+    /**
+     * @return array{eligible: bool, reason?: string}
+     */
+    public function evaluateRefundEligibility(int $reservationId, int $userId): array
+    {
+        $reservation = $this->reservationRepository->find($reservationId);
+        if (!$reservation || $reservation->getUserId() !== $userId) {
+            return ['eligible' => false, 'reason' => 'Reservation not found for this user.'];
+        }
+
+        $status = strtoupper((string) $reservation->getStatus());
+        if (!in_array($status, ['CONFIRMED', 'COMPLETED', 'CANCELLED'], true)) {
+            return ['eligible' => false, 'reason' => 'Reservation status is not refundable.'];
+        }
+
+        $paymentStatus = strtoupper((string) $reservation->getPaymentStatus());
+        if ($paymentStatus === 'REFUNDED') {
+            return ['eligible' => false, 'reason' => 'Reservation is already refunded.'];
+        }
+
+        if ($paymentStatus !== 'PAID') {
+            return ['eligible' => false, 'reason' => 'Only paid reservations are refundable.'];
+        }
+
+        $pendingCount = (int) $this->entityManager->createQueryBuilder()
+            ->select('COUNT(rr.id)')
+            ->from(RefundRequest::class, 'rr')
+            ->join(Reclamation::class, 'r', 'WITH', 'rr.reclamationId = r.id')
+            ->andWhere('rr.requesterId = :userId')
+            ->andWhere('rr.status = :status')
+            ->andWhere('r.reservationId = :reservationId')
+            ->setParameter('userId', $userId)
+            ->setParameter('status', 'PENDING')
+            ->setParameter('reservationId', $reservationId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        if ($pendingCount > 0) {
+            return ['eligible' => false, 'reason' => 'A pending refund request already exists for this reservation.'];
+        }
+
+        return ['eligible' => true];
     }
 
     public function createReservation(int $userId, int $voyageId, ?int $offerId, int $numberOfPeople, float $totalPrice): ?array
@@ -139,7 +188,7 @@ class ReservationService
         }
     }
 
-    public function confirmReservationAsAdmin(int $reservationId): bool
+    public function confirmReservationAsAdmin(int $reservationId, ?string $paymentReference = null): bool
     {
         try {
             $reservation = $this->reservationRepository->find($reservationId);
@@ -150,9 +199,15 @@ class ReservationService
             $reservation->setStatus('CONFIRMED');
             $reservation->setPaymentStatus('PAID');
             $reservation->setPaymentDate(new \DateTime());
+            if ($paymentReference !== null && trim($paymentReference) !== '') {
+                $reservation->setPaymentReference(trim($paymentReference));
+            }
             $reservation->setUpdatedAt(new \DateTime());
 
             $this->entityManager->flush();
+
+            // Award loyalty points: 1 point per TND spent
+            $this->loyaltyPointsService->awardPoints($reservation->getUserId(), (float) $reservation->getTotalPrice());
 
             return true;
         } catch (\Throwable $e) {
@@ -186,44 +241,61 @@ class ReservationService
         }
     }
 
-public function listAllReservations(): array
-{
-    try {
-        $reservations = $this->reservationRepository->findAll();
-        $result = [];
+    public function listAllReservations(): array
+    {
+        try {
+            $reservations = $this->reservationRepository->findAll();
+            if (empty($reservations)) {
+                return [];
+            }
 
-        foreach ($reservations as $reservation) {
-            $user = $this->userRepository->findById($reservation->getUserId());
-            $voyage = $this->voyageRepository->findById($reservation->getVoyageId());
+            // Batch-load users and voyages — 2 queries instead of 2N
+            $userIds   = array_unique(array_map(fn($r) => $r->getUserId(),   $reservations));
+            $voyageIds = array_unique(array_map(fn($r) => $r->getVoyageId(), $reservations));
 
-            $result[] = [
-                'id' => $reservation->getId(),
-                'user_id' => $reservation->getUserId(),
-                'user_name' => $user ? $user->getUsername() : null,
-                'voyage_id' => $reservation->getVoyageId(),
-                'voyage_title' => $voyage ? $voyage->getTitle() : null,
-                'offer_id' => $reservation->getOfferId(),
-                'reservation_date' => $reservation->getReservationDate(),
-                'number_of_people' => $reservation->getNumberOfPeople(),
-                'total_price' => $reservation->getTotalPrice(),
-                'status' => $reservation->getStatus(),
-                'special_requests' => $reservation->getSpecialRequests(),
-                'payment_status' => $reservation->getPaymentStatus(),
-                'payment_date' => $reservation->getPaymentDate(),
-                'updated_at' => $reservation->getUpdatedAt(),
-                'user_email' => $user ? $user->getEmail() : null,
-                'destination' => $voyage ? $voyage->getDestination() : null, 
-            ];
+            $userMap = [];
+            foreach ($this->userRepository->findByIds($userIds) as $u) {
+                $userMap[$u->getId()] = $u;
+            }
+            $voyageMap = [];
+            foreach ($this->voyageRepository->findByIds($voyageIds) as $v) {
+                $voyageMap[$v->getId()] = $v;
+            }
+
+            $result = [];
+            foreach ($reservations as $reservation) {
+                $user   = $userMap[$reservation->getUserId()]   ?? null;
+                $voyage = $voyageMap[$reservation->getVoyageId()] ?? null;
+
+                $result[] = [
+                    'id'               => $reservation->getId(),
+                    'user_id'          => $reservation->getUserId(),
+                    'user_name'        => $user?->getUsername(),
+                    'voyage_id'        => $reservation->getVoyageId(),
+                    'voyage_title'     => $voyage?->getTitle(),
+                    'offer_id'         => $reservation->getOfferId(),
+                    'reservation_date' => $reservation->getReservationDate(),
+                    'number_of_people' => $reservation->getNumberOfPeople(),
+                    'total_price'      => $reservation->getTotalPrice(),
+                    'status'           => $reservation->getStatus(),
+                    'special_requests' => $reservation->getSpecialRequests(),
+                    'payment_status'   => $reservation->getPaymentStatus(),
+                    'payment_date'     => $reservation->getPaymentDate(),
+                    'payment_reference'=> $reservation->getPaymentReference(),
+                    'updated_at'       => $reservation->getUpdatedAt(),
+                    'user_email'       => $user?->getEmail(),
+                    'destination'      => $voyage?->getDestination(),
+                ];
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to list all reservations', ['error' => $e->getMessage()]);
+            return [];
         }
-
-        return $result;
-    } catch (\Throwable $e) {
-        $this->logger->error('Failed to list all reservations', ['error' => $e->getMessage()]);
-        return [];
     }
-}
 
-    public function confirmReservation(int $reservationId, int $userId): bool
+    public function confirmReservation(int $reservationId, int $userId, ?string $paymentReference = null): bool
     {
         try {
             $reservation = $this->reservationRepository->find($reservationId);
@@ -234,9 +306,15 @@ public function listAllReservations(): array
             $reservation->setStatus('CONFIRMED');
             $reservation->setPaymentStatus('PAID');
             $reservation->setPaymentDate(new \DateTime());
+            if ($paymentReference !== null && trim($paymentReference) !== '') {
+                $reservation->setPaymentReference(trim($paymentReference));
+            }
             $reservation->setUpdatedAt(new \DateTime());
 
             $this->entityManager->flush();
+
+            // Award loyalty points: 1 point per TND spent
+            $this->loyaltyPointsService->awardPoints($userId, (float) $reservation->getTotalPrice());
 
             return true;
         } catch (\Throwable $e) {
@@ -262,14 +340,18 @@ public function listAllReservations(): array
 
     public function requestRefund(int $reservationId, int $userId, string $reason): bool
     {
-        // Only allow if reservation belongs to user and is not PENDING or CANCELLED -> maybe only CONFIRMED or COMPLETED
-        $reservation = $this->reservationRepository->find($reservationId);
-        if (!$reservation || $reservation->getUserId() !== $userId) {
+        $eligibility = $this->evaluateRefundEligibility($reservationId, $userId);
+        if (!$eligibility['eligible']) {
+            $this->logger->warning('Refund request rejected by eligibility rules', [
+                'reservation_id' => $reservationId,
+                'user_id' => $userId,
+                'reason' => $eligibility['reason'] ?? 'Unknown',
+            ]);
             return false;
         }
 
-        $currentStatus = $reservation->getStatus();
-        if (!in_array($currentStatus, ['CONFIRMED', 'CANCELLED', 'COMPLETED'], true)) {
+        $reservation = $this->reservationRepository->find($reservationId);
+        if (!$reservation) {
             return false;
         }
 
@@ -277,6 +359,7 @@ public function listAllReservations(): array
              $refundRequest = $this->refundRequestService->createRefundRequest([
         'reclamation_id' => null,
         'requester_id' => $userId,
+           'reservation_id' => $reservationId,
         'amount' => $reservation->getTotalPrice(),
         'reason' => $reason,
     ]);
@@ -301,6 +384,7 @@ public function listAllReservations(): array
             'total_price' => $reservation->getTotalPrice(),
             'status' => $reservation->getStatus(),
             'payment_status' => $reservation->getPaymentStatus(),
+            'payment_reference' => $reservation->getPaymentReference(),
             'reservation_date' => $reservation->getReservationDate()?->format('Y-m-d H:i:s'),
             'updated_at' => $reservation->getUpdatedAt()?->format('Y-m-d H:i:s'),
         ];

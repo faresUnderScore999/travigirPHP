@@ -13,15 +13,16 @@ class MetricsService
 {
     public function __construct(private Connection $connection) {}
 
+    private function isMySQL(): bool
+    {
+        $platform = strtolower($this->connection->getDatabasePlatform()::class);
+        return str_contains($platform, 'mysql') || str_contains($platform, 'mariadb');
+    }
+
     // -------------------------------------------------------------------------
     // 1. Event & usage metrics (based on unified_events)
     // -------------------------------------------------------------------------
 
-    /**
-     * Count events per type within a date range.
-     *
-     * @return array<string, int> e.g. ['search' => 150, 'voyage_visits' => 89]
-     */
     public function getEventTypeDistribution(string $startDate, string $endDate): array
     {
         $sql = '

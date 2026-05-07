@@ -14,6 +14,7 @@ class VoyageService
         private readonly VoyageRepository $voyageRepository,
         private readonly VoyageImageRepository $voyageImageRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly DynamicPricingService $dynamicPricingService,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -96,6 +97,8 @@ class VoyageService
     public function getAllVoyagesForAdmin(): array
     {
         $voyages = $this->safeExecute(fn () => $this->voyageRepository->findAllOrdered());
+        $ids = array_map(fn ($v) => $v->getId(), $voyages);
+        $preloaded = $this->safeExecute(fn () => $this->voyageImageRepository->findImagesByVoyageIds($ids), []);
 
         return $this->mapVoyagesWithImages($voyages, true);
     }
@@ -146,6 +149,7 @@ class VoyageService
 
         return [
             'id' => $voyage->getId(),
+            'slug' => $slug,
             'title' => $voyage->getTitle(),
             'description' => $voyage->getDescription(),
             'destination' => $voyage->getDestination(),
@@ -156,12 +160,15 @@ class VoyageService
             'created_at' => $voyage->getCreatedAt()?->format('Y-m-d H:i:s'),
             'activities_count' => $voyage->getActivities()->count(),
             'offers_count' => $voyage->getOffers()->count(),
+            'tags' => $tags,
         ];
     }
 
     public function getFeaturedVoyages(int $limit = 3): array
     {
         $voyages = $this->safeExecute(fn () => $this->voyageRepository->findFeatured($limit));
+        $ids = array_map(fn ($v) => $v->getId(), $voyages);
+        $preloaded = $this->safeExecute(fn () => $this->voyageImageRepository->findImagesByVoyageIds($ids), []);
 
         return $this->mapVoyagesWithImages($voyages);
     }
@@ -169,20 +176,36 @@ class VoyageService
     public function getAllVoyages(): array
     {
         $voyages = $this->safeExecute(fn () => $this->voyageRepository->findAllOrdered());
+        $ids = array_map(fn ($v) => $v->getId(), $voyages);
+        $preloaded = $this->safeExecute(fn () => $this->voyageImageRepository->findImagesByVoyageIds($ids), []);
+
+        return array_map(fn ($voyage) => $this->mapVoyage($voyage, $preloaded), $voyages);
+    }
 
         return $this->mapVoyagesWithImages($voyages);
     }
 
     public function getVoyages(int $page = 1, int $limit = 12): array
     {
-        $voyages = $this->safeExecute(fn () => $this->voyageRepository->findBy([], ['createdAt' => 'DESC'], $limit, ($page - 1) * $limit));
+        $voyages = $this->safeExecute(fn () => $this->voyageRepository->findPublicPaginated($limit, ($page - 1) * $limit));
+        $ids = array_map(fn ($v) => $v->getId(), $voyages);
+        $preloaded = $this->safeExecute(fn () => $this->voyageImageRepository->findImagesByVoyageIds($ids), []);
 
         return $this->mapVoyagesWithImages($voyages);
     }
 
     public function getTotalVoyages(): int
     {
-        return $this->safeExecute(fn () => $this->voyageRepository->count([]), 0);
+        return $this->safeExecute(fn () => $this->voyageRepository->countPublic(), 0);
+    }
+
+    public function getAllActiveVoyages(): array
+    {
+        $voyages = $this->safeExecute(fn () => $this->voyageRepository->findAllActive());
+        $ids = array_map(fn ($v) => $v->getId(), $voyages);
+        $preloaded = $this->safeExecute(fn () => $this->voyageImageRepository->findImagesByVoyageIds($ids), []);
+
+        return array_map(fn ($voyage) => $this->mapVoyage($voyage, $preloaded), $voyages);
     }
 
     public function getVoyageById(int $id): ?array
@@ -225,6 +248,31 @@ class VoyageService
         ];
     }
 
+    public function getVoyageBySlug(string $slug): ?array
+    {
+        $voyage = $this->safeExecute(fn () => $this->voyageRepository->findBySlug($slug));
+
+        // Fallback: if slug is the "voyage-{id}" pattern and not found by slug, try by ID
+        if ($voyage === null && preg_match('/^voyage-(\d+)$/', $slug, $m)) {
+            $voyage = $this->safeExecute(fn () => $this->voyageRepository->find((int) $m[1]));
+        }
+
+        if ($voyage === null) {
+            return null;
+        }
+        $mapped = $this->mapVoyage($voyage);
+        $mapped['activities'] = [];
+        foreach ($voyage->getActivities() as $activity) {
+            $mapped['activities'][] = [
+                'name' => $activity->getName(),
+                'description' => $activity->getDescription(),
+                'duration_hours' => $activity->getDurationHours(),
+                'price_per_person' => $activity->getPricePerPerson(),
+            ];
+        }
+        return $mapped;
+    }
+
     /**
      * Extract image URLs from voyage images repository
      * @return string[]
@@ -260,8 +308,10 @@ class VoyageService
     {
         $this->logger?->info('Searching voyages with filters', $filters);
         $voyages = $this->safeExecute(fn () => $this->voyageRepository->search($filters));
+        $ids = array_map(fn ($v) => $v->getId(), $voyages);
+        $preloaded = $this->safeExecute(fn () => $this->voyageImageRepository->findImagesByVoyageIds($ids), []);
 
-        return array_map(fn ($voyage) => $this->mapVoyage($voyage), $voyages);
+        return array_map(fn ($voyage) => $this->mapVoyage($voyage, $preloaded), $voyages);
     }
 
     /**

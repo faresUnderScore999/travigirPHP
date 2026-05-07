@@ -280,7 +280,6 @@ PROMPT;
                     $toolUsed = true;
 
                     // Execute the requested tool
-                    // Execute the requested tool
                     $toolResult = match ($functionName) {
                         'get_top_destinations' => $metrics->getTopDestinations($args['limit'] ?? 5),
                         'get_all_users' => $metrics->getAllUsers($args['limit'] ?? 50),
