@@ -97,13 +97,10 @@ class ReclamationController extends AbstractController
             }
 
             // If no errors so far, attempt to create the reclamation
-            if (!isset($error)) {
-                $reclamation = $this->reclamationService->createReclamation($data);
-                if ($reclamation) {
-                    $this->addFlash('success', 'Reclamation submitted successfully.');
-                    return $this->redirectToRoute('user_reclamations');
-                }
-                $error = ['general' => ['Unable to create reclamation.']];
+            if ($error === null) {
+                $this->reclamationService->createReclamation($data);
+                $this->addFlash('success', 'Reclamation submitted successfully.');
+                return $this->redirectToRoute('user_reclamations');
             }
         }
         return $this->render('reclamation/form.html.twig', [
@@ -132,17 +129,29 @@ class ReclamationController extends AbstractController
     // ---------------------------------------------------------------------
     // ADMIN ENDPOINTS
     // ---------------------------------------------------------------------
-    #[Route('/admin/reclamations', name: 'admin_reclamations', methods: ['GET'])]
-    public function adminList(Request $request): Response
-    {
-        if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
-            return $adminResp;
-        }
-        $reclamations = $this->reclamationService->getOpenReclamations(); // could be all, adjust as needed
-        return $this->render('admin/reclamations/list.html.twig', [
-            'reclamations' => $reclamations,
-        ]);
+#[Route('/admin/reclamations', name: 'admin_reclamations', methods: ['GET'])]
+public function adminList(Request $request): Response
+{
+    if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
+        return $adminResp;
     }
+
+    // Get parameters from URL
+    $page = $request->query->getInt('page', 1);
+    $limit = $request->query->getInt('limit', 10);
+    $email = $request->query->get('email'); // Filter by email
+
+    $pagination = $this->reclamationService->getPaginatedReclamations($page, $limit, $email);
+
+    return $this->render('admin/reclamations/list.html.twig', [
+        'reclamations' => $pagination['data'],
+        'totalItems'   => $pagination['totalItems'],
+        'totalPages'   => $pagination['totalPages'],
+        'currentPage'  => $pagination['currentPage'],
+        'limit'        => $limit,
+        'currentEmail' => $email, // Pass back to keep it in the search box
+    ]);
+}
 
     #[Route('/admin/reclamations/{id}', name: 'admin_reclamation_detail', requirements: ['id' => '\\d+'], methods: ['GET'])]
     public function adminDetail(Request $request, int $id): Response

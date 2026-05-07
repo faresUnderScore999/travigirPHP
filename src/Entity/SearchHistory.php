@@ -94,3 +94,4 @@ class SearchHistory
         return $this;
     }
 }
+

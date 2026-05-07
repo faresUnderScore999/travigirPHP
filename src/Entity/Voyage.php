@@ -168,3 +168,4 @@ class Voyage
         return $this->offers;
     }
 }
+

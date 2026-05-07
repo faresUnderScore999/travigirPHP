@@ -4,13 +4,15 @@ namespace App\Service;
 
 use App\Repository\UserRepository;
 use App\Repository\AdminRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 class AuthService
 {
     public function __construct(
         private readonly UserRepository $userRepository,
-         private readonly AdminRepository $adminRepository, 
+        private readonly AdminRepository $adminRepository,
+        private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -137,9 +139,8 @@ class AuthService
         $user->setPassword($plainPassword); // setPassword() now hashes automatically
         $user->setCreatedAt(new \DateTime());
 
-            $entityManager = $this->userRepository->getEntityManager();
-            $entityManager->persist($user);
-            $entityManager->flush();
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
 
             return [
                 'id' => $user->getId(),
@@ -168,7 +169,27 @@ class AuthService
             'is_admin' => $this->isAdmin($user->getId()),
         ];
     }
+public function getUserByEmail(string $email): ?array
+{
+    // 1. Ask the repository to find the user entity by email
+    $user = $this->userRepository->findOneBy(['email' => $email]);
 
+    // 2. If no user found, return null
+    if (!$user) {
+        return null;
+    }
+
+    // 3. Return the user data in the same format as getUserById
+    return [
+        'id' => $user->getId(),
+        'username' => $user->getUsername(),
+        'email' => $user->getEmail(),
+        'tel' => $user->getTel(),
+        'image_url' => $user->getImageUrl(),
+        'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
+        'is_admin' => $this->isAdmin($user->getId()),
+    ];
+}
  public function isAdmin(int $userId): bool
 {
     $admin = $this->adminRepository->findByUserId($userId);
@@ -223,8 +244,7 @@ class AuthService
     }
 
         try {
-            $entityManager = $this->userRepository->getEntityManager();
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             return [
                 'id' => $user->getId(),
@@ -263,9 +283,8 @@ class AuthService
         }
 
         try {
-            $entityManager = $this->userRepository->getEntityManager();
-            $entityManager->remove($user);
-            $entityManager->flush();
+            $this->entityManager->remove($user);
+            $this->entityManager->flush();
             return true;
         } catch (\Throwable $e) {
             $this->logger->error('Failed to delete user', ['user_id' => $userId, 'error' => $e->getMessage()]);
