@@ -23,6 +23,11 @@ services:
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
+    App\Service\CloudinaryService:
+        arguments:
+            $cloudName: '%env(string:CLOUDINARY_CLOUD_NAME)%'
+            $apiKey: '%env(string:CLOUDINARY_API_KEY)%'
+            $apiSecret: '%env(string:CLOUDINARY_API_SECRET)%'
     App\Service\Analytics\NvidiaAIClient:
         arguments:
             $apiKeyNvidia: '%env(NVIDIA_API_KEY)%'
@@ -31,11 +36,7 @@ services:
         arguments:
             $apiKey:  '%env(string:RAPIDAPI_KEY)%'
             $apiHost: '%env(string:RAPIDAPI_BOOKING_HOST)%'
-    App\Service\CloudinaryService:
-        arguments:
-            $cloudName: '%env(string:CLOUDINARY_CLOUD_NAME)%'
-            $apiKey: '%env(string:CLOUDINARY_API_KEY)%'
-            $apiSecret: '%env(string:CLOUDINARY_API_SECRET)%'
+   
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
