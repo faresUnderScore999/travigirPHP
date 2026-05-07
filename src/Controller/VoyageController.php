@@ -89,7 +89,7 @@ class VoyageController extends AbstractController
         if (!empty($search)) {
             $sessionUser = $request->getSession()->get('auth_user');
             $userId = $sessionUser['id'] ?? 0;
-            $resultsFound = is_array($voyages) ? count($voyages) : 0;
+            $resultsFound = count($voyages);
             $this->searchHistoryService->recordSearch($userId, $search, 'voyage', $resultsFound);
         }
 
@@ -187,12 +187,8 @@ class VoyageController extends AbstractController
             }
 
             $this->logger?->info('Creating new voyage', ['title' => $data['title'] ?? '']);
-            $voyage = $this->voyageService->createVoyage($data);
-            if ($voyage) {
-                $this->addFlash('success', 'Voyage created successfully!');
-            } else {
-                $this->addFlash('error', 'Failed to create voyage.');
-            }
+            $this->voyageService->createVoyage($data);
+            $this->addFlash('success', 'Voyage created successfully!');
             return $this->redirectToRoute('admin_voyages');
         }
 

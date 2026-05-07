@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Service\AuthService;
 use App\Repository\UserRepository;
 use App\Repository\AdminRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -46,9 +47,10 @@ class AuthServiceTest extends TestCase
         $adminRepo->method('findByUserId')
             ->willReturn(new \App\Entity\Admin()); // non‑null indicates admin
 
+        $em = $this->createMock(EntityManagerInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
-        $authService = new AuthService($userRepo, $adminRepo, $logger);
+        $authService = new AuthService($userRepo, $adminRepo, $em, $logger);
 
         $result = $authService->authenticate($adminEmail, $adminPassword);
         $this->assertIsArray($result);
@@ -70,9 +72,10 @@ class AuthServiceTest extends TestCase
         $adminRepo->method('findByUserId')
             ->willReturn(null); // not an admin
 
+        $em = $this->createMock(EntityManagerInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
-        $authService = new AuthService($userRepo, $adminRepo, $logger);
+        $authService = new AuthService($userRepo, $adminRepo, $em, $logger);
 
         $result = $authService->authenticate($userEmail, $userPassword);
         $this->assertIsArray($result);

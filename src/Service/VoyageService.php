@@ -97,7 +97,7 @@ class VoyageService
     {
         $voyages = $this->safeExecute(fn () => $this->voyageRepository->findAllOrdered());
 
-        return array_map(fn ($voyage) => $this->mapVoyageForAdmin($voyage), $voyages);
+        return $this->mapVoyagesWithImages($voyages, true);
     }
 
     /**
@@ -114,9 +114,35 @@ class VoyageService
         return null;
     }
 
-    private function mapVoyageForAdmin(object $voyage): array
+    /**
+     * Batch-maps voyages with their images in 1 extra query instead of N.
+     * @param object[] $voyages
+     * @return array[]
+     */
+    private function mapVoyagesWithImages(array $voyages, bool $forAdmin = false): array
     {
-        $imageUrls = $this->extractImageUrls($voyage->getId());
+        if (empty($voyages)) {
+            return [];
+        }
+
+        $ids = array_map(fn ($v) => $v->getId(), $voyages);
+        $imagesMap = $this->safeExecute(
+            fn () => $this->voyageImageRepository->findByVoyageIds($ids),
+            []
+        );
+
+        return array_map(
+            fn ($voyage) => $forAdmin
+                ? $this->mapVoyageForAdmin($voyage, $imagesMap[$voyage->getId()] ?? [])
+                : $this->mapVoyage($voyage, $imagesMap[$voyage->getId()] ?? []),
+            $voyages
+        );
+    }
+
+    private function mapVoyageForAdmin(object $voyage, array $preloadedImages = []): array
+    {
+        $imageUrls = array_map(fn ($img) => $img->getImageUrl(), $preloadedImages)
+            ?: $this->extractImageUrls($voyage->getId());
 
         return [
             'id' => $voyage->getId(),
@@ -137,21 +163,21 @@ class VoyageService
     {
         $voyages = $this->safeExecute(fn () => $this->voyageRepository->findFeatured($limit));
 
-        return array_map(fn ($voyage) => $this->mapVoyage($voyage), $voyages);
+        return $this->mapVoyagesWithImages($voyages);
     }
 
     public function getAllVoyages(): array
     {
         $voyages = $this->safeExecute(fn () => $this->voyageRepository->findAllOrdered());
 
-        return array_map(fn ($voyage) => $this->mapVoyage($voyage), $voyages);
+        return $this->mapVoyagesWithImages($voyages);
     }
 
     public function getVoyages(int $page = 1, int $limit = 12): array
     {
         $voyages = $this->safeExecute(fn () => $this->voyageRepository->findBy([], ['createdAt' => 'DESC'], $limit, ($page - 1) * $limit));
 
-        return array_map(fn ($voyage) => $this->mapVoyage($voyage), $voyages);
+        return $this->mapVoyagesWithImages($voyages);
     }
 
     public function getTotalVoyages(): int
@@ -182,9 +208,10 @@ class VoyageService
         return null;
     }
 
-    private function mapVoyage(object $voyage): array
+    private function mapVoyage(object $voyage, array $preloadedImages = []): array
     {
-     
+        $imageUrls = array_map(fn ($img) => $img->getImageUrl(), $preloadedImages)
+            ?: $this->extractImageUrls($voyage->getId());
 
         return [
             'id' => $voyage->getId(),
@@ -194,7 +221,7 @@ class VoyageService
             'start_date' => $voyage->getStartDate()?->format('Y-m-d'),
             'end_date' => $voyage->getEndDate()?->format('Y-m-d'),
             'price' => $voyage->getPrice(),
-            'image_url'  => $this->extractImageUrls($voyage->getId())
+            'image_url' => $imageUrls,
         ];
     }
 
@@ -206,12 +233,7 @@ class VoyageService
     {
         $images = $this->safeExecute(fn () => $this->voyageImageRepository->findByVoyageId($voyageId), []);
 
-        return array_map(function ($image) {
-            if (is_array($image)) {
-                return $image['imageUrl'] ?? '';
-            }
-            return $image->getImageUrl();
-        }, $images);
+        return array_map(fn ($image) => $image->getImageUrl(), $images);
     }
 
     /**
