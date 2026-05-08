@@ -41,7 +41,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $imageUrl = null;
 
     // 3. Keep this as DATETIMETZ to satisfy the earlier DB config warning
-    #[ORM\Column(name: 'created_at', type: Types::DATETIMETZ_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int

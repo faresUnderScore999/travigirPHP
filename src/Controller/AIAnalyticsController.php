@@ -214,8 +214,7 @@ class AIAnalyticsController extends AbstractController
             return $this->json(['error' => 'No question provided'], 400);
         }
 
-        // Pre‑fetch the full snapshot once – can be injected as system context
-        // for general questions, but the AI can also call the tool explicitly.
+        // Pre‑fetch snapshot for system context
         $snapshot = $metrics->getFullAnalyticsSnapshot();
         $snapshotJson = json_encode($snapshot, JSON_PRETTY_PRINT);
 
@@ -247,179 +246,118 @@ PROMPT;
             ['role' => 'user', 'content' => $question]
         ];
 
-        $toolResult = null;
-        $toolName = '';
-        $toolCallId = null;
-        $toolUsed = false;
+        // --- First AI call ---
+        $response = $ai->chat($messages, $this->tools);
+        $choice = $response['choices'][0]['message'] ?? null;
 
-        // Agentic loop – up to 2 turns (AI asks tool, then AI answers)
-        for ($i = 0; $i < 2; $i++) {
-            $response = $ai->chat($messages, $this->tools);
-            $choice = $response['choices'][0]['message'] ?? null;
-
-            if (!$choice) {
-                return $this->json(['error' => 'No response from AI'], 500);
-            }
-            if ($choice && !isset($choice['tool_calls']) && isset($choice['content'])) {
-                $fakeToolCalls = $this->extractToolCallFromContent($choice['content']);
-                if ($fakeToolCalls) {
-                    $choice['tool_calls'] = $fakeToolCalls;
-                    $choice['content'] = '';
-                }
-            }
-
-            // If AI wants to call a tool, execute and append result
-            if (isset($choice['tool_calls'])) {
-                $messages[] = $choice; // assistant message with tool_calls
-
-                foreach ($choice['tool_calls'] as $toolCall) {
-                    $functionName = $toolCall['function']['name'];
-                    $args = json_decode($toolCall['function']['arguments'], true) ?? [];
-                    $toolName = $functionName;
-                    $toolCallId = $toolCall['id'];
-                    $toolUsed = true;
-
-                    // Execute the requested tool
-                    // Execute the requested tool
-                    $toolResult = match ($functionName) {
-                        'get_top_destinations' => $metrics->getTopDestinations($args['limit'] ?? 5),
-                        'get_all_users' => $metrics->getAllUsers($args['limit'] ?? 50),
-                        'get_voyages_with_most_reclamations' => $metrics->getVoyagesWithMostReclamations($args['limit'] ?? 5),
-                        'get_full_analytics_snapshot' => $metrics->getFullAnalyticsSnapshot(
-                            $args['start_date'] ?? null,
-                            $args['end_date'] ?? null
-                        ),
-                        'get_event_type_distribution' => $metrics->getEventTypeDistribution(
-                            (string) ($args['start_date'] ?? ''),
-                            (string) ($args['end_date'] ?? '')
-                        ),
-                        'get_search_to_view_conversion_rate' => $metrics->getSearchToViewConversionRate(
-                            (string) ($args['start_date'] ?? ''),
-                            (string) ($args['end_date'] ?? '')
-                        ),
-                        'get_top_voyages_by_visits' => $metrics->getTopVoyagesByVisits(
-                            $args['limit'] ?? 5
-                        ),
-                        'get_user_growth_stats' => $metrics->getUserGrowthStats(
-                            (string) ($args['start_date'] ?? ''),
-                            (string) ($args['end_date'] ?? '')
-                        ),
-                        'get_reservation_summary' => $metrics->getReservationSummary(
-                            (string) ($args['start_date'] ?? ''),
-                            (string) ($args['end_date'] ?? '')
-                        ),
-                        'get_payment_success_rate' => $metrics->getPaymentSuccessRate(
-                            (string) ($args['start_date'] ?? ''),
-                            (string) ($args['end_date'] ?? '')
-                        ),
-                        'get_reclamation_summary' => $metrics->getReclamationSummary(
-                            (string) ($args['start_date'] ?? ''),
-                            (string) ($args['end_date'] ?? '')
-                        ),
-                        'get_refund_request_summary' => $metrics->getRefundRequestSummary(
-                            (string) ($args['start_date'] ?? ''),
-                            (string) ($args['end_date'] ?? '')
-                        ),
-                        'get_unmet_demand_destinations' => $metrics->getUnmetDemandDestinations(
-                            $args['limit'] ?? 5
-                        ),
-                        'get_voyage_details' => $metrics->getVoyageDetails((string) ($args['identifier'] ?? '')),
-                        default => ['error' => "Tool '{$functionName}' not implemented"]
-                    };
-
-                    $messages[] = [
-                        'role' => 'tool',
-                        'tool_call_id' => $toolCallId,
-                        'name' => $toolName,
-                        'content' => json_encode($toolResult)
-                    ];
-                }
-
-                // After tool call, ask the AI to explain and analyze the result in detail
-                $explainPrompt = "You just called the function '$toolName'. Please analyze and explain the returned value in detail for the user, including all relevant numbers and insights. Do not just summarize, but provide a thorough breakdown.";
-                $messages[] = ['role' => 'user', 'content' => $explainPrompt];
-                $response = $ai->chat($messages, $this->tools);
-                $choice = $response['choices'][0]['message'] ?? null;
-                $aiContent = $choice['content'] ?? '';
-                return $this->json([
-                    'answer' => $aiContent,
-                    'data' => $toolResult
-                ]);
-            }
-
-            // No tool call – this is the final answer
-            $aiContent = $choice['content'] ?? '';
-
-            // If the AI didn't use a tool but the user asked for data or mentioned a function, try to extract and call it
-            if (!$toolUsed) {
-                // Try to extract a function name from the answer
-                if (preg_match('/get_([a-zA-Z0-9_]+)/', $aiContent, $funcMatch)) {
-                    $functionName = $funcMatch[0];
-                    // Try to call with default args (last 30 days)
-                    $args = [
-                        'start_date' => date('Y-m-d', strtotime('-30 days')),
-                        'end_date' => date('Y-m-d')
-                    ];
-                    // ... inside the if (!$toolUsed) block ...
-
-                    $toolResult = match ($functionName) {
-                        'get_top_destinations' => $metrics->getTopDestinations(5),
-                        'get_all_users' => $metrics->getAllUsers(50),
-                        'get_voyages_with_most_reclamations' => $metrics->getVoyagesWithMostReclamations(5),
-                        'get_full_analytics_snapshot' => $metrics->getFullAnalyticsSnapshot(),
-                        'get_event_type_distribution' => $metrics->getEventTypeDistribution($args['start_date'], $args['end_date']),
-                        'get_search_to_view_conversion_rate' => $metrics->getSearchToViewConversionRate($args['start_date'], $args['end_date']),
-                        'get_top_voyages_by_visits' => $metrics->getTopVoyagesByVisits(5),
-                        'get_user_growth_stats' => $metrics->getUserGrowthStats($args['start_date'], $args['end_date']),
-                        'get_reservation_summary' => $metrics->getReservationSummary($args['start_date'], $args['end_date']),
-                        'get_payment_success_rate' => $metrics->getPaymentSuccessRate($args['start_date'], $args['end_date']),
-                        'get_reclamation_summary' => $metrics->getReclamationSummary($args['start_date'], $args['end_date']),
-                        'get_refund_request_summary' => $metrics->getRefundRequestSummary($args['start_date'], $args['end_date']),
-                        'get_unmet_demand_destinations' => $metrics->getUnmetDemandDestinations(5),
-                        'get_voyage_details' => $metrics->getVoyageDetails(''), // Changed from ' ' to ''
-                        default => null
-                    };
-                    if ($toolResult !== null) {
-                        // Ask the AI to explain and analyze the result in detail
-                        $explainPrompt = "You just called the function '$functionName'. Please analyze and explain the returned value in detail for the user, including all relevant numbers and insights. Do not just summarize, but provide a thorough breakdown.";
-                        $messages[] = ['role' => 'user', 'content' => $explainPrompt];
-                        $messages[] = [
-                            'role' => 'tool',
-                            'tool_call_id' => uniqid('manual_'),
-                            'name' => $functionName,
-                            'content' => json_encode($toolResult)
-                        ];
-                        $response = $ai->chat($messages, $this->tools);
-                        $choice = $response['choices'][0]['message'] ?? null;
-                        $aiContent = $choice['content'] ?? '';
-                        return $this->json([
-                            'answer' => $aiContent,
-                            'data' => $toolResult
-                        ]);
-                    }
-                }
-                // If the user asked for a snapshot or 360, return the pre-fetched snapshot
-                if (stripos($question, 'snapshot') !== false || stripos($question, '360') !== false) {
-                    return $this->json(['data' => $snapshot]);
-                }
-            }
-
-            // Return the AI's natural language answer
-            return $this->json(['answer' => $aiContent]);
+        if (!$choice) {
+            return $this->json(['error' => 'No response from AI'], 500);
         }
 
-        // If we exit the loop without a final answer, provide a readable summary
-        // If we exit the loop without a final answer, provide a readable summary
-        if ($toolUsed && $toolResult !== null) {
-            // Add (string) cast here ↓
-            $summary = $this->formatAnalyticsResult((string) $toolName, $toolResult);
+        // If the AI didn't provide tool_calls but its content looks like a tool call, fix it
+        if (!isset($choice['tool_calls']) && isset($choice['content'])) {
+            $fakeToolCalls = $this->extractToolCallFromContent($choice['content']);
+            if ($fakeToolCalls) {
+                $choice['tool_calls'] = $fakeToolCalls;
+                $choice['content'] = '';
+            }
+        }
+
+        // --- Handle tool calls if present ---
+        if (isset($choice['tool_calls'])) {
+            $messages[] = $choice; // assistant message with tool_calls
+
+            $toolName = '';
+            $toolResult = null;
+
+            foreach ($choice['tool_calls'] as $toolCall) {
+                $functionName = $toolCall['function']['name'];
+                $args = json_decode($toolCall['function']['arguments'], true) ?? [];
+                $toolName = $functionName;
+                $toolCallId = $toolCall['id'];
+
+                // Execute the requested tool
+                $toolResult = match ($functionName) {
+                    'get_top_destinations' => $metrics->getTopDestinations($args['limit'] ?? 5),
+                    'get_all_users' => $metrics->getAllUsers($args['limit'] ?? 50),
+                    'get_voyages_with_most_reclamations' => $metrics->getVoyagesWithMostReclamations($args['limit'] ?? 5),
+                    'get_full_analytics_snapshot' => $metrics->getFullAnalyticsSnapshot(
+                        $args['start_date'] ?? null,
+                        $args['end_date'] ?? null
+                    ),
+                    'get_event_type_distribution' => $metrics->getEventTypeDistribution(
+                        (string) ($args['start_date'] ?? ''),
+                        (string) ($args['end_date'] ?? '')
+                    ),
+                    'get_search_to_view_conversion_rate' => $metrics->getSearchToViewConversionRate(
+                        (string) ($args['start_date'] ?? ''),
+                        (string) ($args['end_date'] ?? '')
+                    ),
+                    'get_top_voyages_by_visits' => $metrics->getTopVoyagesByVisits(
+                        $args['limit'] ?? 5
+                    ),
+                    'get_user_growth_stats' => $metrics->getUserGrowthStats(
+                        (string) ($args['start_date'] ?? ''),
+                        (string) ($args['end_date'] ?? '')
+                    ),
+                    'get_reservation_summary' => $metrics->getReservationSummary(
+                        (string) ($args['start_date'] ?? ''),
+                        (string) ($args['end_date'] ?? '')
+                    ),
+                    'get_payment_success_rate' => $metrics->getPaymentSuccessRate(
+                        (string) ($args['start_date'] ?? ''),
+                        (string) ($args['end_date'] ?? '')
+                    ),
+                    'get_reclamation_summary' => $metrics->getReclamationSummary(
+                        (string) ($args['start_date'] ?? ''),
+                        (string) ($args['end_date'] ?? '')
+                    ),
+                    'get_refund_request_summary' => $metrics->getRefundRequestSummary(
+                        (string) ($args['start_date'] ?? ''),
+                        (string) ($args['end_date'] ?? '')
+                    ),
+                    'get_unmet_demand_destinations' => $metrics->getUnmetDemandDestinations(
+                        $args['limit'] ?? 5
+                    ),
+                    'get_voyage_details' => $metrics->getVoyageDetails((string) ($args['identifier'] ?? '')),
+                    default => ['error' => "Tool '{$functionName}' not implemented"]
+                };
+
+                $messages[] = [
+                    'role' => 'tool',
+                    'tool_call_id' => $toolCallId,
+                    'name' => $toolName,
+                    'content' => json_encode($toolResult)
+                ];
+            }
+
+            // Second AI call – ask it to explain the tool result
+            $explainPrompt = "You just called the function '$toolName'. Please analyze and explain the returned value in detail for the user, including all relevant numbers and insights. Do not just summarize, but provide a thorough breakdown.";
+            $messages[] = ['role' => 'user', 'content' => $explainPrompt];
+
+            $finalResponse = $ai->chat($messages, $this->tools);
+            $finalChoice = $finalResponse['choices'][0]['message'] ?? null;
+            $aiAnswer = $finalChoice['content'] ?? '';
+
+            // Generate a readable summary from the raw data
+            $summary = $this->formatAnalyticsResult($toolName, $toolResult);
+
             return $this->json([
+                'answer'  => $aiAnswer,
                 'summary' => $summary,
                 'data'    => $toolResult
             ]);
         }
 
-        return $this->json(['error' => 'The AI could not complete the request.'], 500);
+        // --- No tool call: AI gave a direct answer ---
+
+        // If the user explicitly asked for a snapshot or 360, return the pre‑fetched snapshot
+        if (stripos($question, 'snapshot') !== false || stripos($question, '360') !== false) {
+            return $this->json(['data' => $snapshot]);
+        }
+
+        // Otherwise return the plain AI answer
+        return $this->json(['answer' => $choice['content'] ?? '']);
     }
 
     /**
@@ -505,6 +443,7 @@ PROMPT;
 
         return implode("\n", $lines);
     }
+
     /**
      * If the AI's content looks like a tool call JSON, parse it and return an array
      * that mimics the standard tool_calls structure.
@@ -515,7 +454,6 @@ PROMPT;
         if (preg_match('/\{(?:[^{}]|(?R))*\}/s', $content, $match)) {
             $decoded = json_decode($match[0], true);
             if (json_last_error() === JSON_ERROR_NONE && isset($decoded['tool_calls'])) {
-                // Normalize to the format our loop expects
                 return $decoded['tool_calls'];
             }
         }
@@ -523,7 +461,6 @@ PROMPT;
         if (preg_match('/(\w+)\(([^)]+)\)/', $content, $matches)) {
             $funcName = $matches[1];
             $argsRaw = $matches[2];
-            // Simple argument parsing (supports quoted strings and numbers)
             $args = [];
             if (is_numeric($argsRaw)) {
                 $args = ['identifier' => $argsRaw];

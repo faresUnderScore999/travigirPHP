@@ -124,20 +124,44 @@ class AdminController extends AbstractController
 
     // ==================== USER MANAGEMENT ====================
 
-    #[Route('/users', name: 'admin_users', methods: ['GET'])]
-    public function index(Request $request): Response
-    {
-        if ($this->ensureAdmin($request) !== null) {
-            return $this->ensureAdmin($request);
-        }
+   // src/Controller/Admin/UserController.php (or wherever the route is)
+// src/Controller/AdminController.php
 
-        $users = $this->authService->listUsers();
-
-        return $this->render('user/index.html.twig', [
-            'active_nav' => 'account',
-            'users' => $users,
-        ]);
+#[Route('/users', name: 'admin_users', methods: ['GET'])]
+public function index(Request $request): Response
+{
+    if ($this->ensureAdmin($request) !== null) {
+        return $this->ensureAdmin($request);
     }
+    
+    $page = $request->query->getInt('page', 1);
+    $limit = 10;
+    
+    // Build filters – remove 'role'
+    $filters = [
+        'search' => $request->query->get('search', ''),
+        'sort_by' => $request->query->get('sort_by', 'createdAt'),
+        'sort_order' => $request->query->get('sort_order', 'DESC'),
+    ];
+    
+    $paginated = $this->authService->getPaginatedUsers($page, $limit, $filters);
+    $users = $paginated['users'];
+    $totalUsers = $paginated['total'];
+    $totalPages = ceil($totalUsers / $limit) ?: 1;
+    
+    // Remove role filter from template variables
+    return $this->render('user/index.html.twig', [
+        'active_nav' => 'account',
+        'users' => $users,
+        'current_page' => $page,
+        'total_pages' => $totalPages,
+        'total_users' => $totalUsers,
+        'search' => $filters['search'],
+        'sort_by' => $filters['sort_by'],
+        'sort_order' => $filters['sort_order'],
+        // Remove admins_count and regular_count from template
+    ]);
+}
 
     #[Route('/users/new', name: 'admin_users_new', methods: ['GET', 'POST'])]
     public function create(Request $request): Response
