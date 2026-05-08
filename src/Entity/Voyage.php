@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Mapping\Annotation as Gedmo;
 
 #[ORM\Entity(repositoryClass: VoyageRepository::class)]
 #[ORM\Table(name: 'voyages')]
@@ -40,6 +41,10 @@ class Voyage
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
+
+    #[Gedmo\Slug(fields: ['title'])]
+    #[ORM\Column(length: 255, unique: true)]
+    private string $slug = '';
 
     /** @var Collection<int, Activity> */
     #[ORM\OneToMany(mappedBy: 'voyage', targetEntity: Activity::class)]
@@ -167,5 +172,18 @@ class Voyage
     {
         return $this->offers;
     }
+
+    public function getSlug(): string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): self
+    {
+        $this->slug = $slug;
+        return $this;
+    }
+
+
 }
 

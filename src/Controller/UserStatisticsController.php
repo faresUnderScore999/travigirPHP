@@ -3,8 +3,8 @@
 namespace App\Controller;
 
 use App\Service\SearchHistoryService;
-use App\Service\UserLoginService;
 use App\Service\ValidationService;
+use App\Service\UserLoginService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;

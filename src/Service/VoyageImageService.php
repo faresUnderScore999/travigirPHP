@@ -132,11 +132,13 @@ public function createVoyageImage(array $data): ?VoyageImage
             []
         );
 
-        return array_map(fn ($image) => [
-            'id' => $image->getId(),
-            'image_url' => $image->getImageUrl(),
-            'cloudinary_public_id' => $image->getCloudinaryPublicId(),
-        ], $images);
+        return array_map(function ($image) {
+            return [
+                'id' => $image->getId(),
+                'image_url' => $image->getImageUrl(),
+                'cloudinary_public_id' => $image->getCloudinaryPublicId(),
+            ];
+        }, $images);
     }
 
     /**
