@@ -83,7 +83,7 @@ public function reserveVoyage(Request $request, int $id): Response
             $this->addFlash('error', $e->getMessage());
         }
 
-        return $this->redirectToRoute('travel_voyage_reserve', ['id' => $id]);
+         return $this->redirectToRoute('travel_voyage_detail', ['id' => $id]);
     }
 
     return $this->render('travel/reserve.html.twig', [
