@@ -21,74 +21,79 @@ class ReservationController extends AbstractController
         private readonly ValidationService $validationService
     ) {}
 
-    #[Route('/voyages/{id}/reserve', name: 'travel_voyage_reserve', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
-    public function reserveVoyage(Request $request, int $id): Response
-    {
-        $user = $request->getSession()->get('auth_user');
-        if (!$user) {
-            return $this->redirectToRoute('auth_login');
-        }
+#[Route('/voyages/{id}/reserve', name: 'travel_voyage_reserve', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
+public function reserveVoyage(Request $request, int $id): Response
+{
+    $user = $request->getSession()->get('auth_user');
+    if (!$user) {
+        return $this->redirectToRoute('auth_login');
+    }
 
-        $voyage = $this->voyageService->getVoyageById($id);
-        if ($voyage === null) {
-            throw $this->createNotFoundException('Voyage not found');
-        }
+    $voyage = $this->voyageService->getVoyageById($id);
+    if ($voyage === null) {
+        throw $this->createNotFoundException('Voyage not found');
+    }
 
-        $offers = array_filter($this->offerService->getActiveOffers(), fn($o) => (int) $o['voyage_id'] === $id);
-        $activeOffer = $offers ? array_values($offers)[0] : null;
+    // Check if the user already has a reservation for this voyage
+    $existingReservation = $this->reservationService->getReservationByUserAndVoyage($user['id'], $id);
+    if ($existingReservation) {
+        $this->addFlash('error', 'You already have a reservation for this voyage.');
+        return $this->redirectToRoute('travel_voyage_detail', ['id' => $id]);
+    }
 
+    $offers = array_filter($this->offerService->getActiveOffers(), fn($o) => (int) $o['voyage_id'] === $id);
+    $activeOffer = $offers ? array_values($offers)[0] : null;
 
+    if ($request->isMethod('POST')) {
+        $numberOfPeople = (int) $request->request->get('number_of_people', 1);
 
-        if ($request->isMethod('POST')) {
-            $numberOfPeople = (int) $request->request->get('number_of_people', 1);
+        // Use ValidationService for validation
+        $this->validationService->clearErrors();
+        $this->validationService->validateNumber($numberOfPeople, 'number_of_people', 1, 20);
 
-            // Use ValidationService for validation
-            $this->validationService->clearErrors();
-            $this->validationService->validateNumber($numberOfPeople, 'number_of_people', 1, 20);
-
-            if (!$this->validationService->isValid()) {
-                $errors = $this->validationService->getErrors();
-                foreach ($errors as $field => $fieldErrors) {
-                    foreach ($fieldErrors as $err) {
-                        $this->addFlash('error', $err);
-                    }
+        if (!$this->validationService->isValid()) {
+            $errors = $this->validationService->getErrors();
+            foreach ($errors as $field => $fieldErrors) {
+                foreach ($fieldErrors as $err) {
+                    $this->addFlash('error', $err);
                 }
-                return $this->redirectToRoute('travel_voyage_reserve', ['id' => $id]);
             }
-
-            $voyagePrice = (float) ($voyage['price'] ?? 0);
-            $discount = $activeOffer ? ((float) $activeOffer['discount_percentage'] / 100) : 0;
-            $totalPrice = $numberOfPeople * $voyagePrice * (1 - $discount);
-
-            try {
-                $created = $this->reservationService->createReservation(
-                    $user['id'],
-                    $id,
-                    $activeOffer ? (int) $activeOffer['id'] : null,
-                    $numberOfPeople,
-                    $totalPrice
-                );
-
-                if ($created === null) {
-                    throw new \Exception('Creation failed');
-                }
-
-                $this->addFlash('success', 'Reservation created successfully');
-            } catch (\Throwable $e) {
-                $this->addFlash('error', $e->getMessage());
-            }
-
             return $this->redirectToRoute('travel_voyage_reserve', ['id' => $id]);
         }
 
-        return $this->render('travel/reserve.html.twig', [
-            'active_nav' => 'voyages',
-            'voyage' => $voyage,
-            'offer' => $activeOffer,
-            'error' => null,  // Add this
-            'success' => null, // Add this
-        ]);
+        $voyagePrice = (float) ($voyage['price'] ?? 0);
+        $discount = $activeOffer ? ((float) $activeOffer['discount_percentage'] / 100) : 0;
+        $totalPrice = $numberOfPeople * $voyagePrice * (1 - $discount);
+
+        try {
+            $created = $this->reservationService->createReservation(
+                $user['id'],
+                $id,
+                $activeOffer ? (int) $activeOffer['id'] : null,
+                $numberOfPeople,
+                $totalPrice
+            );
+
+            if ($created === null) {
+                throw new \Exception('Creation failed');
+            }
+
+            $this->addFlash('success', 'Reservation created successfully');
+        } catch (\Throwable $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('travel_voyage_reserve', ['id' => $id]);
     }
+
+    return $this->render('travel/reserve.html.twig', [
+        'active_nav' => 'voyages',
+        'voyage' => $voyage,
+        'offer' => $activeOffer,
+        'error' => null,
+        'success' => null,
+    ]);
+}
 
     #[Route('/account/bookings', name: 'account_bookings', methods: ['GET'])]
     public function accountBookings(Request $request): Response
