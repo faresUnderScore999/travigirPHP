@@ -1,30 +1,240 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Reclamation Detail{% endblock %}
+{% block title %}Reclamation #{{ reclamation.id }} | Travagir{% endblock %}
 
 {% block body %}
-    <h1>Reclamation Detail</h1>
+<style>
+    /* Professional Ticket View Styling */
+    .ticket-container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+        color: var(--text-primary);
+    }
+
+    .ticket-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-dark);
+    }
+
+    .ticket-id-group h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .ticket-id-group p {
+        color: var(--text-muted);
+        margin-top: 5px;
+        font-size: 0.9rem;
+    }
+
+    /* Status & Priority Badges */
+    .badge-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .status-pill {
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid var(--amazon-orange);
+        color: var(--amazon-orange);
+        background: rgba(255, 153, 0, 0.05);
+    }
+
+    .status-resolved { border-color: #22c55e; color: #22c55e; background: rgba(34, 197, 94, 0.05); }
+    .status-closed { border-color: var(--text-muted); color: var(--text-muted); background: rgba(156, 163, 175, 0.05); }
+
+    /* Main Ticket Card */
+    .ticket-card {
+        background: var(--amazon-white);
+        border: 1px solid var(--border-dark);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .ticket-section {
+        padding: 30px;
+    }
+
+    .ticket-section-header {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--amazon-orange-soft);
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    .claim-subject {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: var(--text-primary);
+    }
+
+    .claim-description {
+        line-height: 1.6;
+        color: var(--text-secondary);
+        white-space: pre-wrap; /* Preserves line breaks from textarea */
+    }
+
+    /* Meta Info Grid */
+    .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 25px 30px;
+        border-top: 1px solid var(--border-dark);
+    }
+
+    .meta-item label {
+        display: block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        font-weight: 700;
+    }
+
+    .meta-item span {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    /* Admin Response Panel - High Emphasis */
+    .admin-response-panel {
+        background: var(--amazon-navy);
+        border: 1px solid var(--amazon-orange-soft);
+        border-radius: 12px;
+        padding: 30px;
+        margin-top: 30px;
+        position: relative;
+    }
+
+    .admin-response-panel::before {
+        content: 'OFFICIAL RESPONSE';
+        position: absolute;
+        top: -10px;
+        left: 20px;
+        background: var(--amazon-orange);
+        color: var(--amazon-dark);
+        font-size: 0.65rem;
+        font-weight: 900;
+        padding: 2px 10px;
+        border-radius: 4px;
+    }
+
+    .response-content {
+        font-style: italic;
+        line-height: 1.6;
+        color: var(--text-primary);
+        font-size: 1.05rem;
+    }
+
+    .response-meta {
+        margin-top: 15px;
+        font-size: 0.8rem;
+        color: var(--amazon-orange-soft);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 20px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--amazon-orange); }
+</style>
+
+<div class="ticket-container">
     {% if reclamation %}
-        <div class="admin-table-container">
-            <table class="admin-table">
-                <tbody>
-                    <tr><th>ID</th><td>{{ reclamation.id }}</td></tr>
-                    <tr><th>Reservation ID</th><td>{{ reclamation.reservationId }}</td></tr>
-                    <tr><th>User ID</th><td>{{ reclamation.userId }}</td></tr>
-                    <tr><th>Title</th><td>{{ reclamation.title }}</td></tr>
-                    <tr><th>Description</th><td>{{ reclamation.description }}</td></tr>
-                    <tr><th>Status</th><td>{{ reclamation.status }}</td></tr>
-                    <tr><th>Priority</th><td>{{ reclamation.priority }}</td></tr>
-                    <tr><th>Created At</th><td>{{ reclamation.createdAt ? reclamation.createdAt|date('Y-m-d H:i') : '' }}</td></tr>
-                    <tr><th>Updated At</th><td>{{ reclamation.updatedAt ? reclamation.updatedAt|date('Y-m-d H:i') : '' }}</td></tr>
-                    <tr><th>Admin Response</th><td>{{ reclamation.adminResponse|default('') }}</td></tr>
-                    <tr><th>Response Date</th><td>{{ reclamation.responseDate ? reclamation.responseDate|date('Y-m-d H:i') : '' }}</td></tr>
-                    <tr><th>Resolution Date</th><td>{{ reclamation.resolutionDate ? reclamation.resolutionDate|date('Y-m-d H:i') : '' }}</td></tr>
-                </tbody>
-            </table>
-        </div>
+        <header class="ticket-header">
+            <div class="ticket-id-group">
+                <p>SUPPORT TICKET</p>
+                <h1>#{{ reclamation.id }}</h1>
+            </div>
+            <div class="badge-group">
+                <div class="status-pill status-{{ reclamation.status|lower }}">
+                    {{ reclamation.status }}
+                </div>
+            </div>
+        </header>
+
+        <article class="ticket-card">
+            <div class="ticket-section">
+                <span class="ticket-section-header">Subject</span>
+                <h2 class="claim-subject">{{ reclamation.title }}</h2>
+                
+                <span class="ticket-section-header" style="margin-top: 25px;">Message Details</span>
+                <div class="claim-description">
+                    {{ reclamation.description }}
+                </div>
+            </div>
+
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <label>Associated Booking</label>
+                    <span>#{{ reclamation.reservationId }}</span>
+                </div>
+                <div class="meta-item">
+                    <label>Priority Level</label>
+                    <span style="color: {{ reclamation.priority|lower == 'high' ? '#ff4d4d' : 'inherit' }}">
+                        {{ reclamation.priority }}
+                    </span>
+                </div>
+                <div class="meta-item">
+                    <label>Submission Date</label>
+                    <span>{{ reclamation.createdAt|date('d M Y, H:i') }}</span>
+                </div>
+                {% if reclamation.resolutionDate %}
+                    <div class="meta-item">
+                        <label>Resolution Date</label>
+                        <span>{{ reclamation.resolutionDate|date('d M Y') }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </article>
+
+        {% if reclamation.adminResponse %}
+            <div class="admin-response-panel">
+                <div class="response-content">
+                    "{{ reclamation.adminResponse }}"
+                </div>
+                <div class="response-meta">
+                    <span>— Travagir Support Team</span>
+                    <span>Processed on {{ reclamation.responseDate|date('d M Y, H:i') }}</span>
+                </div>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.9rem; border: 1px dashed var(--border-dark); border-radius: 12px;">
+                Our support team is currently reviewing your claim. You will receive an update here shortly.
+            </div>
+        {% endif %}
+
     {% else %}
-        <p>Reclamation not found.</p>
+        <div class="alert alert-error">Reclamation details could not be retrieved.</div>
     {% endif %}
-    <p><a href="{{ path('user_reclamations') }}" class="btn btn-primary">Back to My Reclamations</a></p>
+
+    <a href="{{ path('user_reclamations') }}" class="back-link">
+        ← Back to My Reclamations
+    </a>
+</div>
 {% endblock %}

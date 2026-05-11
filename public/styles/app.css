@@ -456,4 +456,217 @@
     box-shadow: none;
     border: 1px solid #ccc;
   }
+  /* ========================================
+   TRAVAGIR PROFESSIONAL PORTAL ADDITIONS
+   ======================================== */
+
+/* 1. SHARED UTILITIES (Used across all portal pages) */
+.portal-wrapper {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: var(--text-primary);
+}
+
+.portal-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-dark);
+    padding-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.portal-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+/* Professional Status & Priority Pills */
+.status-pill, .badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    border: 1px solid var(--amazon-orange);
+    color: var(--amazon-orange);
+    background: rgba(255, 153, 0, 0.05);
+}
+
+.status-cancelled, .status-closed, .priority-high {
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+    background: rgba(255, 77, 77, 0.05);
+}
+
+.status-confirmed, .status-resolved, .status-completed {
+    border-color: #22c55e;
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.05);
+}
+
+/* Professional Cards/Panels */
+.portal-panel {
+    background: var(--amazon-white);
+    border: 1px solid var(--border-dark);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 20px;
+}
+
+.panel-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--amazon-orange-soft);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-dark);
+    display: block;
+}
+
+/* 2. FORM & INPUT STYLES (Checkout & Reclamations) */
+.modern-control, .modern-input {
+    width: 100%;
+    background: var(--amazon-dark) !important;
+    border: 1px solid var(--border-dark);
+    color: white !important;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.modern-control:focus, .modern-input:focus {
+    outline: none;
+    border-color: var(--amazon-orange);
+    box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.15);
+}
+
+/* 3. BOOKING & RESERVATION LISTINGS */
+.booking-card {
+    background: var(--amazon-white);
+    border: 1px solid var(--border-dark);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.booking-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--amazon-orange-soft);
+}
+
+.card-top-bar {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px 25px;
+    border-bottom: 1px solid var(--border-dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-main-content {
+    padding: 25px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    align-items: center;
+    gap: 20px;
+}
+
+/* 4. TABLES (Support / Reclamations List) */
+.support-table-wrapper {
+    background: var(--amazon-white);
+    border: 1px solid var(--border-dark);
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+.support-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.support-table th {
+    background: var(--amazon-navy);
+    color: var(--amazon-orange-soft);
+    padding: 18px 20px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.support-table td {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 5. TICKET & DETAIL VIEWS (Reclamation Detail) */
+.admin-response-panel {
+    background: var(--amazon-navy);
+    border: 1px solid var(--amazon-orange-soft);
+    border-radius: 12px;
+    padding: 30px;
+    margin-top: 30px;
+    position: relative;
+}
+
+.admin-response-panel::before {
+    content: 'OFFICIAL RESPONSE';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--amazon-orange);
+    color: var(--amazon-dark);
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 2px 10px;
+    border-radius: 4px;
+}
+
+/* 6. RESPONSIVE MEDIA QUERIES */
+@media (max-width: 992px) {
+    .detail-grid, .checkout-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .card-main-content {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .summary-sidebar {
+        position: static !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .portal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .card-top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .card-main-content {
+        grid-template-columns: 1fr;
+    }
+
+    .hide-mobile {
+        display: none;
+    }
+    
+    .portal-panel {
+        padding: 20px;
+    }
+}
 }

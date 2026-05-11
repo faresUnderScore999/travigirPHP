@@ -1,98 +1,198 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}My Reclamations{% endblock %}
+{% block title %}My Reclamations | Travagir{% endblock %}
 
 {% block body %}
-    <h1>My Reclamations</h1>
- 
+<style>
+    /* Professional Support Portal Styling */
+    .reclamations-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+        color: var(--text-primary);
+    }
+
+    .portal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 30px;
+        border-bottom: 1px solid var(--border-dark);
+        padding-bottom: 20px;
+    }
+
+    .portal-header h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    /* Refined Table Design */
+    .support-table-wrapper {
+        background: var(--amazon-white);
+        border: 1px solid var(--border-dark);
+        border-radius: 12px;
+        overflow: hidden; /* Clips the corners of the table */
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .support-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .support-table th {
+        background: var(--amazon-navy);
+        color: var(--amazon-orange-soft);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 18px 20px;
+        font-weight: 700;
+    }
+
+    .support-table td {
+        padding: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+        font-size: 0.95rem;
+    }
+
+    .support-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .support-table tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Subject & ID Link */
+    .rec-title {
+        color: var(--text-primary);
+        font-weight: 700;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 4px;
+        transition: color 0.2s;
+    }
+
+    .rec-title:hover {
+        color: var(--amazon-orange);
+    }
+
+    .rec-subtext {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    /* Status & Priority Badges */
+    .badge {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+
+    .status-pending { background: rgba(255, 153, 0, 0.1); color: var(--amazon-orange); border: 1px solid var(--amazon-orange); }
+    .status-resolved { background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid #22c55e; }
+    .status-closed { background: rgba(156, 163, 175, 0.1); color: #9ca3af; border: 1px solid #9ca3af; }
+
+    .priority-high { color: #ff4d4d; font-weight: 700; }
+    .priority-medium { color: var(--amazon-orange-soft); }
+    .priority-low { color: var(--text-muted); }
+
+    /* Admin Response Preview */
+    .response-preview {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-style: italic;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    /* Empty State */
+    .empty-support {
+        text-align: center;
+        padding: 60px;
+        background: var(--amazon-white);
+        border: 1px dashed var(--border-dark);
+        border-radius: 12px;
+    }
+
+    @media (max-width: 1000px) {
+        .hide-mobile { display: none; }
+    }
+</style>
+
+<div class="reclamations-container">
+    <header class="portal-header">
+        <div>
+            <h1>My Support Claims</h1>
+            <p style="color: var(--text-muted); margin: 5px 0 0;">Track and manage your submitted reclamations.</p>
+        </div>
+        <a href="{{ path('user_reclamation_new') }}" class="btn btn-register">New Reclamation</a>
+    </header>
+
     {% if reclamations|length > 0 %}
-        <div class="admin-table-container">
-        <table class="admin-table">
-            <thead>
-                <tr>
-              
-                    <th>Reservation Number</th>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Created At</th>
-                    <th>Updated At</th>
-                    <th>Admin Response</th>
-                    <th>Response Date</th>
-                    <th>Resolution Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for rec in reclamations %}
+        <div class="support-table-wrapper">
+            <table class="support-table">
+                <thead>
                     <tr>
-                        
-                        <td>{{ rec.reservationId }}</td>
-                        <td><a href="{{ path('user_reclamation_detail', {'id': rec.id}) }}">{{ rec.title }}</a></td>
-                        <td>{{ rec.description }}</td>
-                        <td>{{ rec.status }}</td>
-                        <td>{{ rec.priority }}</td>
-                        <td>{{ rec.createdAt ? rec.createdAt|date('Y-m-d H:i') : '' }}</td>
-                        <td>{{ rec.updatedAt ? rec.updatedAt|date('Y-m-d H:i') : '' }}</td>
-                        <td>{{ rec.adminResponse|default('') }}</td>
-                        <td>{{ rec.responseDate ? rec.responseDate|date('Y-m-d H:i') : '' }}</td>
-                        <td>{{ rec.resolutionDate ? rec.resolutionDate|date('Y-m-d H:i') : '' }}</td>
+                        <th>Claim Details</th>
+                        <th>Status</th>
+                        <th class="hide-mobile">Priority</th>
+                        <th class="hide-mobile">Admin Response</th>
+                        <th>Created</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for rec in reclamations %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('user_reclamation_detail', {'id': rec.id}) }}" class="rec-title">
+                                    {{ rec.title }}
+                                </a>
+                                <span class="rec-subtext">Booking Ref: #{{ rec.reservationId }}</span>
+                            </td>
+                            <td>
+                                <span class="badge status-{{ rec.status|lower }}">
+                                    {{ rec.status }}
+                                </span>
+                            </td>
+                            <td class="hide-mobile">
+                                <span class="priority-{{ rec.priority|lower }}">
+                                    {{ rec.priority }}
+                                </span>
+                            </td>
+                            <td class="hide-mobile">
+                                {% if rec.adminResponse %}
+                                    <div class="response-preview">"{{ rec.adminResponse }}"</div>
+                                    <small style="color: var(--amazon-orange-soft); font-size: 0.7rem;">
+                                        Replied: {{ rec.responseDate|date('d M') }}
+                                    </small>
+                                {% else %}
+                                    <span style="color: rgba(255,255,255,0.2); font-size: 0.8rem;">Waiting for review...</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="font-weight: 600;">{{ rec.createdAt|date('d M Y') }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ rec.createdAt|date('H:i') }}</div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     {% else %}
-        <p>No reclamations found.</p>
+        <div class="empty-support">
+            <p>You have not filed any reclamations yet.</p>
+            <a href="{{ path('account_bookings') }}" class="btn btn-login">View My Bookings</a>
+        </div>
     {% endif %}
-{% endblock %}
-{% block stylesheets %}
-    <style>
-        /* Ensure the admin table styling is applied on the user side */
-     .admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 12px;
-    background: var(--amazon-white);
-
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.admin-table th,
-.admin-table td {
-    padding: 12px 8px;
-    border-bottom: 1px solid var(--border-dark);
-    text-align: left;
-    color: var(--text-muted);
-}
-/* Header style for admin tables – dark navy background with primary text for better contrast */
-.admin-table th {
-    background: var(--amazon-navy);
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.admin-table tr:hover {
-    background: rgba(255, 153, 0, 0.08);
-}
-
-/* Ensure tables have a reasonable minimum width and consistent spacing */
-.admin-table {
-    min-width: 800px;
-}
-
-/* Enhance the container that wraps admin tables – similar to the reservations page container */
-/* Enhanced container for admin tables – provides a distinct card‑like appearance */
-/* Container for admin tables – mirrors the styling of the reservations page table container */
-.admin-table-container {
-    margin-top: 24px;
-    background: var(--amazon-white);
-    border: 1px solid var(--border-dark);
-    border-radius: 12px;
-    overflow-x: auto;
-    box-shadow: 0 8px 25px rgba(255, 153, 0, 0.2);
-    padding: 24px; /* provides consistent inner spacing */
-}
-    </style>
+</div>
 {% endblock %}

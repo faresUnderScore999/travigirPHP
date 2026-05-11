@@ -104,10 +104,12 @@ public function reserveVoyage(Request $request, int $id): Response
         }
 
         $reservations = $this->reservationService->getReservationsForUser($user['id']);
+          $isAdmin = $user['is_admin'] ?? false;
 
         return $this->render('travel/bookings.html.twig', [
             'active_nav' => 'account',
             'bookings' => $reservations,
+              'is_admin_view' => $isAdmin
         ]);
     }
 
