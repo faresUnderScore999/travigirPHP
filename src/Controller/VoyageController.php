@@ -233,8 +233,7 @@ class VoyageController extends AbstractController
 
         $this->reviewService->submitReview($userId, $id, $rating, $comment ?: null);
 
-        $voyage = $this->voyageRepository->find($id);
-        $slug = $voyage?->getSlug() ?? (string) $id;
+        $slug = 'voyage-' . $id;
 
         $this->addFlash('success', 'Your review has been saved. Thank you!');
         return $this->redirectToRoute('travel_voyage_detail', ['slug' => $slug]);

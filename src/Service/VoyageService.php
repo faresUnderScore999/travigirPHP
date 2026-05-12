@@ -139,10 +139,7 @@ class VoyageService
         } else {
             $imageUrls = $this->extractImageUrls($vid);
         }
-        $slug = $voyage->getSlug();
-        if ($slug === '') {
-            $slug = 'voyage-' . $vid;
-        }
+        $slug = 'voyage-' . $vid;
 
         return [
             'id' => $vid,
@@ -282,10 +279,7 @@ class VoyageService
     private function mapVoyage(Voyage $voyage, ?array $preloadedImages = null, ?array $bookedMap = null): array
     {
         $vid = (int) $voyage->getId();
-        $slug = $voyage->getSlug();
-        if ($slug === '') {
-            $slug = 'voyage-' . $vid;
-        }
+        $slug = 'voyage-' . $vid;
 
         if ($preloadedImages !== null) {
             $imgs = $preloadedImages[$vid] ?? [];

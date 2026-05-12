@@ -14,13 +14,12 @@ use PHPUnit\Framework\TestCase;
 
 class VoyageServiceTest extends TestCase
 {
-    private function makeVoyage(int $id, string $title, string $destination, string $price, string $slug = ''): Voyage
+    private function makeVoyage(int $id, string $title, string $destination, string $price): Voyage
     {
         $voyage = new Voyage();
         $voyage->setTitle($title);
         $voyage->setDestination($destination);
         $voyage->setPrice($price);
-        $voyage->setSlug($slug ?: 'voyage-' . $id);
         $voyage->setStartDate(new \DateTime('+60 days'));
         $voyage->setEndDate(new \DateTime('+70 days'));
         $voyage->setCreatedAt(new \DateTime());
@@ -168,8 +167,8 @@ class VoyageServiceTest extends TestCase
 
     public function testGetFeaturedVoyagesReturnsMappedArray(): void
     {
-        $v1 = $this->makeVoyage(1, 'Rome Trip', 'Rome', '800.00', 'rome-trip');
-        $v2 = $this->makeVoyage(2, 'Paris Trip', 'Paris', '900.00', 'paris-trip');
+        $v1 = $this->makeVoyage(1, 'Rome Trip', 'Rome', '800.00');
+        $v2 = $this->makeVoyage(2, 'Paris Trip', 'Paris', '900.00');
 
         $repo = $this->createMock(VoyageRepository::class);
         $repo->method('findFeatured')->willReturn([$v1, $v2]);
@@ -183,14 +182,14 @@ class VoyageServiceTest extends TestCase
         $this->assertCount(2, $result);
         $this->assertSame('Rome Trip', $result[0]['title']);
         $this->assertSame('Paris Trip', $result[1]['title']);
-        $this->assertSame('rome-trip', $result[0]['slug']);
+        $this->assertSame('voyage-1', $result[0]['slug']);
         $this->assertArrayHasKey('price', $result[0]);
         $this->assertArrayHasKey('image_url', $result[0]);
     }
 
     public function testGetFeaturedVoyagesFallbackSlug(): void
     {
-        $v = $this->makeVoyage(7, 'Mystery Trip', 'Unknown', '500.00', '');
+        $v = $this->makeVoyage(7, 'Mystery Trip', 'Unknown', '500.00');
 
         $repo = $this->createMock(VoyageRepository::class);
         $repo->method('findFeatured')->willReturn([$v]);
@@ -229,7 +228,7 @@ class VoyageServiceTest extends TestCase
 
     public function testGetVoyageByIdReturnsArrayWithActivities(): void
     {
-        $voyage = $this->makeVoyage(3, 'Beach Escape', 'Tunis', '450.00', 'beach-escape');
+        $voyage = $this->makeVoyage(3, 'Beach Escape', 'Tunis', '450.00');
         $repo   = $this->createMock(VoyageRepository::class);
         $repo->method('find')->willReturn($voyage);
         $imageRepo = $this->createMock(VoyageImageRepository::class);
@@ -258,8 +257,8 @@ class VoyageServiceTest extends TestCase
 
     public function testGetVoyagesByIdsReturnsMappedById(): void
     {
-        $v1 = $this->makeVoyage(10, 'Trip A', 'Tokyo', '1200.00', 'trip-a');
-        $v2 = $this->makeVoyage(11, 'Trip B', 'Seoul', '1100.00', 'trip-b');
+        $v1 = $this->makeVoyage(10, 'Trip A', 'Tokyo', '1200.00');
+        $v2 = $this->makeVoyage(11, 'Trip B', 'Seoul', '1100.00');
 
         $repo = $this->createMock(VoyageRepository::class);
         $repo->method('findByIds')->willReturn([$v1, $v2]);
@@ -280,7 +279,7 @@ class VoyageServiceTest extends TestCase
 
     public function testMapVoyageUsesPreloadedBookedCounts(): void
     {
-        $voyage = $this->makeVoyage(5, 'Safari', 'Kenya', '3000.00', 'safari');
+        $voyage = $this->makeVoyage(5, 'Safari', 'Kenya', '3000.00');
 
         $repo = $this->createMock(VoyageRepository::class);
         $repo->method('findFeatured')->willReturn([$voyage]);

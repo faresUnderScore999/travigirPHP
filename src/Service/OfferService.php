@@ -180,7 +180,6 @@ class OfferService
                 'end_date' => $offer->getEndDate()?->format('Y-m-d'),
                 'is_active' => $offer->isActive(),
                 'voyage_id'    => $voyage->getId(),
-                'voyage_slug'  => $voyage->getSlug(),
                 'voyage_title' => $voyage->getTitle(),
                 'destination'  => $voyage->getDestination(),
             ];
@@ -196,11 +195,6 @@ class OfferService
             $data['days_until_expiry'] = $endDate
                 ? max(-1, (int) ceil(($endDate->getTimestamp() - time()) / 86400))
                 : 999;
-
-            // Flash sale
-            $data['flash_sale_active']    = $offer->isFlashSaleActive();
-            $data['flash_sale_ends_at']   = $offer->isFlashSaleActive() ? $offer->getFlashSaleEndsAt()?->format('c') : null;
-            $data['flash_sale_discount']  = $offer->isFlashSaleActive() ? (float) ($offer->getFlashSaleDiscount() ?? 0) : 0;
 
             $normalized[] = $data;
         }
