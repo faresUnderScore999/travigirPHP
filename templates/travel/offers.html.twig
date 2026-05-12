@@ -21,19 +21,12 @@
             {% for offer in offers %}
                 {% set base_price = offer.price|default(0) %}
                 {% set discount = offer.discount_percentage|default(0) %}
-                {% set flash_extra = offer.flash_sale_active ? offer.flash_sale_discount|default(0) : 0 %}
-                {% set effective_discount = discount + flash_extra %}
-                {% set final_price = base_price - ((effective_discount / 100) * base_price) %}
+                {% set final_price = base_price - ((discount / 100) * base_price) %}
                 {% set days_left = offer.days_until_expiry|default(999) %}
 
-                <article class="offer futuristic-offer {% if offer.flash_sale_active %}flash-sale-card{% endif %}">
+                <article class="offer futuristic-offer">
 
-                    {% if offer.flash_sale_active %}
-                        <div class="flash-banner">
-                            ⚡ FLASH SALE — ends in
-                            <span class="flash-countdown" data-ends="{{ offer.flash_sale_ends_at }}">calculating…</span>
-                        </div>
-                    {% elseif days_left >= 0 and days_left <= 3 %}
+                    {% if days_left >= 0 and days_left <= 3 %}
                         <div class="urgency-banner">🔥 Expiring in {{ days_left == 0 ? 'today' : days_left ~ ' day' ~ (days_left > 1 ? 's' : '') }}!</div>
                     {% endif %}
 
@@ -44,10 +37,7 @@
                     <div class="offer-body">
                         <h3>
                             {{ offer.title|default('Special offer') }}
-                            <span>
-                                -{{ discount }}%
-                                {% if flash_extra > 0 %}<span class="flash-extra">+{{ flash_extra }}% FLASH</span>{% endif %}
-                            </span>
+                            <span>-{{ discount }}%</span>
                         </h3>
                         <p class="offer-desc">{{ offer.description|default('Explore the unknown with future-forward comfort.') }}</p>
 
@@ -68,7 +58,7 @@
                                 <p><del>{{ base_price|format_price }}</del> <strong>{{ final_price|format_price }}</strong></p>
                             </div>
                             <div style="display:flex;gap:8px;align-items:center">
-                                <button class="tg-share-btn" onclick="tgShare('{{ offer.title|default('Special offer')|e('js') }}', '{{ url('travel_voyage_detail', {slug: offer.voyage_slug}) }}')" title="Share">
+                                <button class="tg-share-btn" onclick="tgShare('{{ offer.title|default('Special offer')|e('js') }}', '{{ url('travel_voyage_detail', {slug: 'voyage-' ~ offer.voyage_id}) }}')" title="Share">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                                     Share
                                 </button>

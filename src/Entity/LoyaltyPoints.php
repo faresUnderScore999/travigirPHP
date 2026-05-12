@@ -8,7 +8,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LoyaltyPointsRepository::class)]
 #[ORM\Table(name: 'loyalty_points')]
-#[ORM\HasLifecycleCallbacks]
 class LoyaltyPoints
 {
     #[ORM\Id]
@@ -25,9 +24,6 @@ class LoyaltyPoints
     #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE)]
     private \DateTimeInterface $updatedAt;
 
-    #[ORM\Column(type: 'string', length: 64)]
-    private string $signature = '';
-
     public function __construct()
     {
         $this->updatedAt = new \DateTime();
@@ -43,21 +39,4 @@ class LoyaltyPoints
 
     public function getUpdatedAt(): \DateTimeInterface { return $this->updatedAt; }
     public function setUpdatedAt(\DateTimeInterface $updatedAt): self { $this->updatedAt = $updatedAt; return $this; }
-
-    public function getSignature(): string { return $this->signature; }
-
-    #[ORM\PrePersist]
-    #[ORM\PreUpdate]
-    public function computeSignature(): void
-    {
-        $pepper = $_ENV['LOYALTY_PEPPER'] ?? '';
-        $this->signature = hash('sha256', $this->userId . '|' . $this->pointsBalance . '|' . $pepper);
-    }
-
-    public function isSignatureValid(): bool
-    {
-        $pepper = $_ENV['LOYALTY_PEPPER'] ?? '';
-        $expected = hash('sha256', $this->userId . '|' . $this->pointsBalance . '|' . $pepper);
-        return hash_equals($expected, $this->signature);
-    }
 }
