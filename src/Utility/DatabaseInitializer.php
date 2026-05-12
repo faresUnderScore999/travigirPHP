@@ -278,6 +278,20 @@ CREATE TABLE IF NOT EXISTS loyalty_points (
     CONSTRAINT fk_loyalty_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )");
 
+            /* ── Payments ── */
+            $this->connection->executeStatement("
+CREATE TABLE IF NOT EXISTS payments (
+    id $pk,
+    reservation_id INTEGER NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    gateway VARCHAR(50) NOT NULL DEFAULT '',
+    reference VARCHAR(255),
+    failure_reason TEXT,
+    attempted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_payments_reservation FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE
+)");
+
             $this->logger->info('Database schema verified/initialized successfully.');
         } catch (\Throwable $e) {
             $this->logger->error('Schema initialization failed: ' . $e->getMessage(), ['exception' => $e]);
