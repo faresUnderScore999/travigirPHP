@@ -45,7 +45,6 @@ services:
 
     App\Service\CloudinaryService:
         arguments:
-        
             $cloudName: '%env(string:CLOUDINARY_CLOUD_NAME)%'
             $apiKey:    '%env(string:CLOUDINARY_API_KEY)%'
             $apiSecret: '%env(string:CLOUDINARY_API_SECRET)%'

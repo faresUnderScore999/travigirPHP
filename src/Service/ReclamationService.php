@@ -17,7 +17,7 @@ class ReclamationService
         private readonly ReservationRepository $reservationRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly AuthService $authService,
-        private readonly ?LoggerInterface $logger = null
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 

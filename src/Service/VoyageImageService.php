@@ -95,7 +95,20 @@ public function createVoyageImage(array $data): ?VoyageImage
     {
         $images = $this->safeExecute(fn () => $this->voyageImageRepository->findAll(), []);
 
-        return $this->normalizeImages($images, true);
+        // Batch-load all referenced voyages in 1 query to avoid N+1
+        $voyageIds = array_unique(array_map(fn ($img) => $img->getVoyageId(), $images));
+        $voyages = [];
+        if (!empty($voyageIds)) {
+            $results = $this->safeExecute(
+                fn () => $this->voyageRepository->findBy(['id' => $voyageIds]),
+                []
+            );
+            foreach ($results as $v) {
+                $voyages[$v->getId()] = $v;
+            }
+        }
+
+        return $this->normalizeImages($images, true, $voyages);
     }
 
     /**
@@ -124,22 +137,21 @@ public function createVoyageImage(array $data): ?VoyageImage
             []
         );
 
-        return array_map(function ($image) {
-            return [
-                'id' => $image->getId(),
-                'image_url' => $image->getImageUrl(),
-                'cloudinary_public_id' => $image->getCloudinaryPublicId(),
-            ];
-        }, $images);
+        return array_map(fn ($image) => [
+            'id' => $image->getId(),
+            'image_url' => $image->getImageUrl(),
+            'cloudinary_public_id' => $image->getCloudinaryPublicId(),
+        ], $images);
     }
 
     /**
      * Normalize images for output
      * @param VoyageImage[] $images
+     * @param array<int, object> $preloadedVoyages  pre-fetched voyage map (id => Voyage)
      * @return array
      * @return array<mixed>
      */
-    private function normalizeImages(array $images, bool $includeVoyageInfo): array
+    private function normalizeImages(array $images, bool $includeVoyageInfo, array $preloadedVoyages = []): array
     {
         $voyageMap = [];
         if ($includeVoyageInfo && !empty($images)) {
@@ -155,16 +167,16 @@ public function createVoyageImage(array $data): ?VoyageImage
 
         $normalized = [];
         foreach ($images as $image) {
-            $normalized[] = $this->normalizeImage($image, $includeVoyageInfo, $voyageMap);
+            $normalized[] = $this->normalizeImage($image, $includeVoyageInfo, $preloadedVoyages);
         }
         return $normalized;
     }
 
     /**
-     * @param array<mixed> $voyageMap
+     * @param array<int, object> $preloadedVoyages
      * @return array<string, mixed>
      */
-    private function normalizeImage(VoyageImage $image, bool $includeVoyageInfo, array $voyageMap = []): array
+    private function normalizeImage(VoyageImage $image, bool $includeVoyageInfo, array $preloadedVoyages = []): array
     {
         $data = [
             'id' => $image->getId(),
@@ -176,8 +188,9 @@ public function createVoyageImage(array $data): ?VoyageImage
         ];
 
         if ($includeVoyageInfo) {
-            $voyage = $voyageMap[$image->getVoyageId()] ?? null;
-            $data['voyage_title'] = $voyage?->getTitle() ?? 'Unknown';
+            $voyage = $preloadedVoyages[$image->getVoyageId()]
+                ?? $this->safeExecute(fn () => $this->voyageRepository->find($image->getVoyageId()), null);
+            $data['voyage_title'] = ($voyage instanceof \App\Entity\Voyage) ? $voyage->getTitle() : 'Unknown';
         }
 
         return $data;

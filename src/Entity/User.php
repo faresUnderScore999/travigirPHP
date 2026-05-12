@@ -7,6 +7,9 @@ use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\ORM\Mapping as ORM;
+// 1. Import these for security protection
+use Symfony\Component\Serializer\Annotation\Ignore;
+use SensitiveParameter;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
@@ -23,6 +26,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 100, unique: true)]
     private string $email = '';
 
+    // 2. Ignore this from serialization to stop "Unprotected sensitive field"
+    #[Ignore]
     #[ORM\Column(length: 255)]
     private string $password = '';
 
@@ -36,13 +41,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'image_url', length: 500, nullable: true)]
     private ?string $imageUrl = null;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    // 3. Keep this as DATETIMETZ to satisfy the earlier DB config warning
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
+
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
@@ -52,7 +59,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $roles = $this->roles;
         $roles[] = 'ROLE_USER';
-
         return array_unique($roles);
     }
 
@@ -64,11 +70,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * Sert à effacer des données sensibles temporaires (souvent vide)
+     * Sert أ  effacer des donnأ©es sensibles temporaires (souvent vide)
      */
     public function eraseCredentials(): void
     {
-        // Si vous stockez des mots de passe en clair temporairement, videz-les ici
     }
 
     public function getUsername(): string
@@ -79,7 +84,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUsername(string $username): self
     {
         $this->username = $username;
-
         return $this;
     }
 
@@ -91,20 +95,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): self
     {
         $this->email = $email;
-
         return $this;
     }
 
+    // 4. Ignore the getter to stop the "Public getter exposes sensitive field" warning
+    #[Ignore]
     public function getPassword(): string
     {
         return $this->password;
     }
 
-    public function setPassword(string $password): self
+    // 5. Use SensitiveParameter to protect logs and stack traces
+    public function setPassword(#[SensitiveParameter] string $password): self
     {
-        // Hash the password automatically using bcrypt (default algorithm)
         $this->password = password_hash($password, PASSWORD_DEFAULT);
-
         return $this;
     }
 
@@ -116,7 +120,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setTel(?string $tel): self
     {
         $this->tel = $tel;
-
         return $this;
     }
 
@@ -128,7 +131,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setImageUrl(?string $imageUrl): self
     {
         $this->imageUrl = $imageUrl;
-
         return $this;
     }
 
@@ -140,7 +142,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setCreatedAt(?\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
-
         return $this;
     }
 }
+

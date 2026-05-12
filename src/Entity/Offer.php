@@ -143,3 +143,4 @@ class Offer
         return $this->flashSaleEndsAt !== null && $this->flashSaleEndsAt > new \DateTime();
     }
 }
+

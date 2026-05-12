@@ -47,9 +47,9 @@ class AuthServiceTest extends TestCase
         $adminRepo->method('findByUserId')
             ->willReturn(new \App\Entity\Admin()); // non‑null indicates admin
 
+        $em = $this->createMock(EntityManagerInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
-        $em = $this->createMock(EntityManagerInterface::class);
         $authService = new AuthService($userRepo, $adminRepo, $em, $logger);
 
         $result = $authService->authenticate($adminEmail, $adminPassword);
@@ -72,9 +72,9 @@ class AuthServiceTest extends TestCase
         $adminRepo->method('findByUserId')
             ->willReturn(null); // not an admin
 
+        $em = $this->createMock(EntityManagerInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
-        $em = $this->createMock(EntityManagerInterface::class);
         $authService = new AuthService($userRepo, $adminRepo, $em, $logger);
 
         $result = $authService->authenticate($userEmail, $userPassword);

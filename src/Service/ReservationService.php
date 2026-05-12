@@ -9,6 +9,7 @@ use App\Service\RefundRequestService;
 use App\Service\LoyaltyPointsService;
 use App\Repository\VoyageRepository;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -109,9 +110,8 @@ class ReservationService
             $reservation->setReservationDate(new \DateTime());
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->entityManager;
-            $entityManager->persist($reservation);
-            $entityManager->flush();
+            $this->entityManager->persist($reservation);
+            $this->entityManager->flush();
 
             return $this->getReservationById((int) $reservation->getId(), $userId);
         } catch (\Throwable $e) {
@@ -204,8 +204,7 @@ class ReservationService
             $reservation->setStatus('CANCELLED');
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->entityManager;
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             return true;
         } catch (\Throwable $e) {
@@ -230,8 +229,7 @@ class ReservationService
             }
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->entityManager;
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             // Award loyalty points: 1 point per TND spent
             $this->loyaltyPointsService->awardPoints($reservation->getUserId(), (float) $reservation->getTotalPrice());
@@ -259,8 +257,7 @@ class ReservationService
             $reservation->setStatus('CANCELLED');
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->entityManager;
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             return true;
         } catch (\Throwable $e) {
@@ -346,8 +343,7 @@ class ReservationService
             }
             $reservation->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->entityManager;
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             // Award loyalty points: 1 point per TND spent
             $this->loyaltyPointsService->awardPoints($userId, (float) $reservation->getTotalPrice());

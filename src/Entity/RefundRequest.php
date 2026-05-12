@@ -12,7 +12,6 @@ class RefundRequest
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-
     private ?int $id = null;
 
     #[ORM\Column(name: 'reclamation_id')]

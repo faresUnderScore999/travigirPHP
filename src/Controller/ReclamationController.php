@@ -100,7 +100,7 @@ class ReclamationController extends AbstractController
                 $error = $this->validationService->getErrors();
             }
 
-            if (!isset($error)) {
+            if ($error === null) {
                 $this->reclamationService->createReclamation($data);
                 $this->addFlash('success', 'Reclamation submitted successfully.');
                 return $this->redirectToRoute('user_reclamations');

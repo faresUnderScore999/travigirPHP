@@ -141,9 +141,8 @@ class AuthService
         $user->setPassword($plainPassword); // setPassword() now hashes automatically
         $user->setCreatedAt(new \DateTime());
 
-            $entityManager = $this->entityManager;
-            $entityManager->persist($user);
-            $entityManager->flush();
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
 
             return [
                 'id' => $user->getId(),
@@ -250,8 +249,7 @@ public function getUserByEmail(string $email): ?array
     }
 
         try {
-            $entityManager = $this->entityManager;
-            $entityManager->flush();
+            $this->entityManager->flush();
 
             return [
                 'id' => $user->getId(),
@@ -291,14 +289,67 @@ public function getUserByEmail(string $email): ?array
         }
 
         try {
-            $entityManager = $this->entityManager;
-            $entityManager->remove($user);
-            $entityManager->flush();
+            $this->entityManager->remove($user);
+            $this->entityManager->flush();
             return true;
         } catch (\Throwable $e) {
             $this->logger->error('Failed to delete user', ['user_id' => $userId, 'error' => $e->getMessage()]);
             return false;
         }
     }
+
+    // src/Service/AuthService.php
+
+// Add this method (or modify existing listUsers to be deprecated)
+// src/Service/AuthService.php
+
+public function getPaginatedUsers(int $page, int $limit, array $filters): array
+{
+    $offset = ($page - 1) * $limit;
+    $filters = array_merge([
+        'search' => '',
+        'sort_by' => 'createdAt',
+        'sort_order' => 'DESC',
+    ], $filters);
+    
+    // Remove 'role' from filters if present
+    unset($filters['role']);
+    
+    $result = $this->userRepository->searchPaginated($filters, $limit, $offset);
+    $users = $result['users'];
+    $total = $result['total'];
+    
+    // Map users to array with is_admin flag (still optional for display)
+    $mappedUsers = array_map(function ($user) {
+        $roles = $user->getRoles();
+        $isAdmin = in_array('ROLE_ADMIN', $roles, true);
+        
+        return [
+            'id' => $user->getId(),
+            'username' => $user->getUsername(),
+            'email' => $user->getEmail(),
+            'tel' => $user->getTel(),
+            'image_url' => $user->getImageUrl(),
+            'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
+            'is_admin' => $isAdmin,
+            'roles' => $roles,
+        ];
+    }, $users);
+    
+    // No stats returned – we'll handle totals in template differently
+    return [
+        'users' => $mappedUsers,
+        'total' => $total,
+    ];
+}
+
+// Remove getUserStats() entirely, or keep it simple without JSON queries:
+public function getUserStats(): array
+{
+    // Return zeros or remove usage
+    return ['total' => 0, 'admins' => 0, 'regular' => 0];
+}
+
+
 }
 

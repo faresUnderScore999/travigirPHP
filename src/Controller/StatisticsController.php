@@ -50,32 +50,33 @@ class StatisticsController extends AbstractController
         return null;
     }
 
-#[Route('/admin/voyage-visits', name: 'admin_voyage_visits', methods: ['GET'])]
-public function voyageVisits(Request $request): Response
-{
-    if ($response = $this->ensureAdmin($request)) {
-        return $response;
+    #[Route('/admin/voyage-visits', name: 'admin_voyage_visits', methods: ['GET'])]
+    public function voyageVisits(Request $request): Response
+    {
+        if ($response = $this->ensureAdmin($request)) {
+            return $response;
+        }
+
+        $page = $request->query->getInt('page', 1);
+        $limit = 20;
+
+        // Chart data now uses names
+        $mostVisited = $this->voyageVisitService->getMostVisitedVoyages(10);
+        $chartLabels = array_map(fn($v) => $v['voyageName'], $mostVisited);
+        $chartData = array_map(fn($v) => (int)$v['visitCount'], $mostVisited);
+
+        $pagination = $this->voyageVisitService->getPaginatedVisits($page, $limit);
+
+        return $this->render('admin/voyage_visits.html.twig', [
+            'visits' => $pagination['data'],
+            'currentPage' => $pagination['currentPage'],
+            'totalPages' => $pagination['totalPages'],
+            'totalItems' => $pagination['totalItems'],
+            'chartLabels' => $chartLabels,
+            'chartData' => $chartData,
+        ]);
     }
 
-    $page = $request->query->getInt('page', 1);
-    $limit = 20;
-
-    // Chart data now uses names
-    $mostVisited = $this->voyageVisitService->getMostVisitedVoyages(10);
-    $chartLabels = array_map(fn($v) => $v['voyageName'], $mostVisited);
-    $chartData = array_map(fn($v) => (int)$v['visitCount'], $mostVisited);
-
-    $pagination = $this->voyageVisitService->getPaginatedVisits($page, $limit);
-
-    return $this->render('admin/voyage_visits.html.twig', [
-        'visits' => $pagination['data'], // This now contains [0 => VoyageVisit object, 'voyageName' => '...']
-        'currentPage' => $pagination['currentPage'],
-        'totalPages' => $pagination['totalPages'],
-        'totalItems' => $pagination['totalItems'],
-        'chartLabels' => $chartLabels,
-        'chartData' => $chartData,
-    ]);
-}
     #[Route('/admin/search-history', name: 'admin_search_history', methods: ['GET'])]
     public function searchHistory(Request $request): Response
     {
@@ -110,7 +111,6 @@ public function voyageVisits(Request $request): Response
             'totalPages' => $paginationData['totalPages'],
             'totalItems' => $paginationData['totalItems'],
             'limit' => $limit,
-            // Add these for the graph
             'chartLabels' => array_keys($typeCounts),
             'chartData' => array_values($typeCounts),
         ]);
@@ -124,9 +124,8 @@ public function voyageVisits(Request $request): Response
         }
 
         $page = $request->query->getInt('page', 1);
-        $limit = 100; // The "Average" recommended rows
+        $limit = 100;
 
-        // You should update your service to support findPaginated or similar
         $logins = $this->userLoginService->getPaginatedLogins($page, $limit);
 
         $stats = array_map(function ($l) {
@@ -145,13 +144,11 @@ public function voyageVisits(Request $request): Response
             $chartRaw[$date] = ($chartRaw[$date] ?? 0) + 1;
         }
 
-        // 2. Sort dates so the graph flows left-to-right
         ksort($chartRaw);
 
         return $this->render('admin/login_stats.html.twig', [
             'stats' => $stats,
             'currentPage' => $page,
-            // Pass these to Twig
             'chartLabels' => array_keys($chartRaw),
             'chartData' => array_values($chartRaw),
         ]);
