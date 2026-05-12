@@ -962,7 +962,6 @@
         dragging = false;
         bot.style.cursor = 'grab';
         bot.style.animation = 'gb-float 3.2s ease-in-out infinite';
-        scheduleRoam();
       });
 
       /* ── Touch drag ── */
@@ -987,7 +986,6 @@
         if (!dragging) return;
         dragging = false;
         bot.style.animation = 'gb-float 3.2s ease-in-out infinite';
-        scheduleRoam();
       }, { passive: true });
 
       /* ── Double-tap for touch ── */
@@ -1242,8 +1240,6 @@
         bot.classList.remove('roaming');
         bot.style.animation = 'gb-float 3.2s ease-in-out infinite';
       }
-      scheduleRoam();
-
       /* eye tracking — throttled to ~30fps via rAF flag */
       let eyeRAF = false;
       document.addEventListener('mousemove', e => {

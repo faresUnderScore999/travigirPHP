@@ -199,9 +199,28 @@
                 window.addEventListener('resize', function () { close(); }, { passive: true });
             }
 
-            makePortal(document.querySelector('.account-btn'),    document.querySelector('.account-menu'));
             makePortal(document.getElementById('langToggle'),     document.getElementById('langMenu'));
             makePortal(document.getElementById('currencyToggle'), document.getElementById('currencyMenu'));
+
+            // Account dropdown — simple click toggle (no portal needed)
+            const accountBtn      = document.querySelector('.account-btn');
+            const accountDropdown = document.querySelector('.account-dropdown');
+            if (accountBtn && accountDropdown) {
+                accountBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    accountDropdown.classList.toggle('active');
+                });
+                document.addEventListener('click', function (e) {
+                    if (accountDropdown && !accountDropdown.contains(e.target)) {
+                        accountDropdown.classList.remove('active');
+                    }
+                });
+                window.addEventListener('resize', function () {
+                    if (window.innerWidth > 768 && accountDropdown) {
+                        accountDropdown.classList.remove('active');
+                    }
+                });
+            }
         });
     </script>
 

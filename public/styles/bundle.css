@@ -599,7 +599,11 @@ nav a.active, nav a:hover {
   margin-top: 8px;
 }
 
-/* dropdown open state handled by JS portal */
+.account-dropdown.active .account-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
 
 .account-info {
   padding: 16px;
