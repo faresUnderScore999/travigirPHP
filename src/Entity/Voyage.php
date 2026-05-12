@@ -36,9 +36,8 @@ class Voyage
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     private ?string $price = null;
 
-    /** @var array<int, string>|null */
-    #[ORM\Column(name: 'image_url', type: 'json', nullable: true)]
-    private ?array $imageUrl = null;
+    #[ORM\Column(name: 'image_url', length: 500, nullable: true)]
+    private ?string $imageUrl = null;
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
@@ -138,14 +137,12 @@ class Voyage
         return $this;
     }
 
-    /** @return array<int, string>|null */
-    public function getImageUrl(): ?array
+    public function getImageUrl(): ?string
     {
         return $this->imageUrl;
     }
 
-    /** @param array<int, string>|null $imageUrl */
-    public function setImageUrl(?array $imageUrl): self
+    public function setImageUrl(?string $imageUrl): self
     {
         $this->imageUrl = $imageUrl;
 

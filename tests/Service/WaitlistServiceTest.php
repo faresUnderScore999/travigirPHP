@@ -266,7 +266,10 @@ class WaitlistServiceTest extends TestCase
         return $list;
     }
 
-    /** @param int[] $userIds @return WaitlistEntry[] */
+    /**
+     * @param int[] $userIds
+     * @return WaitlistEntry[]
+     */
     private function buildEntries(array $userIds): array
     {
         return array_map(

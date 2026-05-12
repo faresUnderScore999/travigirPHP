@@ -4,7 +4,6 @@ namespace App\Service;
 
 use App\Entity\Reservation;
 use App\Entity\RefundRequest;
-use App\Entity\Reclamation;
 use App\Repository\ReservationRepository;
 use App\Service\RefundRequestService;
 use App\Service\LoyaltyPointsService;
@@ -53,10 +52,9 @@ class ReservationService
         $pendingCount = (int) $this->entityManager->createQueryBuilder()
             ->select('COUNT(rr.id)')
             ->from(RefundRequest::class, 'rr')
-            ->join(Reclamation::class, 'r', 'WITH', 'rr.reclamationId = r.id')
-            ->andWhere('rr.requesterId = :userId')
+            ->where('rr.requesterId = :userId')
             ->andWhere('rr.status = :status')
-            ->andWhere('r.reservationId = :reservationId')
+            ->andWhere('rr.reservationId = :reservationId')
             ->setParameter('userId', $userId)
             ->setParameter('status', 'PENDING')
             ->setParameter('reservationId', $reservationId)
@@ -416,17 +414,19 @@ class ReservationService
     private function reservationToArray(Reservation $reservation): array
     {
         return [
-            'id' => $reservation->getId(),
-            'user_id' => $reservation->getUserId(),
-            'voyage_id' => $reservation->getVoyageId(),
-            'offer_id' => $reservation->getOfferId(),
-            'number_of_people' => $reservation->getNumberOfPeople(),
-            'total_price' => $reservation->getTotalPrice(),
-            'status' => $reservation->getStatus(),
-            'payment_status' => $reservation->getPaymentStatus(),
+            'id'                => $reservation->getId(),
+            'user_id'           => $reservation->getUserId(),
+            'voyage_id'         => $reservation->getVoyageId(),
+            'offer_id'          => $reservation->getOfferId(),
+            'number_of_people'  => $reservation->getNumberOfPeople(),
+            'total_price'       => $reservation->getTotalPrice(),
+            'status'            => $reservation->getStatus(),
+            'payment_status'    => $reservation->getPaymentStatus(),
             'payment_reference' => $reservation->getPaymentReference(),
-            'reservation_date' => $reservation->getReservationDate()?->format('Y-m-d H:i:s'),
-            'updated_at' => $reservation->getUpdatedAt()?->format('Y-m-d H:i:s'),
+            'reservation_date'  => $reservation->getReservationDate()?->format('Y-m-d H:i:s'),
+            'updated_at'        => $reservation->getUpdatedAt()?->format('Y-m-d H:i:s'),
+            'user_name'         => null,
+            'user_email'        => null,
         ];
     }
 
@@ -438,15 +438,22 @@ class ReservationService
     {
         $result = $this->reservationToArray($reservation);
 
+        $result['voyage_title']       = null;
+        $result['voyage_description'] = null;
+        $result['destination']        = null;
+        $result['voyage_start']       = null;
+        $result['voyage_end']         = null;
+        $result['voyage_price']       = null;
+
         try {
             $voyage = $this->voyageRepository->find($reservation->getVoyageId());
             if ($voyage) {
-                $result['voyage_title'] = $voyage->getTitle();
+                $result['voyage_title']       = $voyage->getTitle();
                 $result['voyage_description'] = $voyage->getDescription();
-                $result['destination'] = $voyage->getDestination();
-                $result['voyage_start'] = $voyage->getStartDate()?->format('Y-m-d');
-                $result['voyage_end'] = $voyage->getEndDate()?->format('Y-m-d');
-                $result['voyage_price'] = $voyage->getPrice();
+                $result['destination']        = $voyage->getDestination();
+                $result['voyage_start']       = $voyage->getStartDate()?->format('Y-m-d');
+                $result['voyage_end']         = $voyage->getEndDate()?->format('Y-m-d');
+                $result['voyage_price']       = $voyage->getPrice();
             }
         } catch (\Throwable $e) {
             $this->logger->warning('Failed to load voyage details', ['error' => $e->getMessage()]);

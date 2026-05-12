@@ -181,6 +181,7 @@ class ReclamationServiceTest extends TestCase
         $service = $this->makeService($repo, $resRepo, $em);
         $result  = $service->updateStatus(1, 'RESOLVED');
 
+        $this->assertNotNull($result);
         $this->assertSame('RESOLVED', $result->getStatus());
         $this->assertNotNull($result->getResolutionDate());
     }
@@ -198,6 +199,7 @@ class ReclamationServiceTest extends TestCase
         $service = $this->makeService($repo, $resRepo, $em);
         $result  = $service->updateStatus(1, 'CLOSED');
 
+        $this->assertNotNull($result);
         $this->assertNotNull($result->getResolutionDate());
     }
 
@@ -214,6 +216,7 @@ class ReclamationServiceTest extends TestCase
         $service = $this->makeService($repo, $resRepo, $em);
         $result  = $service->updateStatus(1, 'IN_PROGRESS');
 
+        $this->assertNotNull($result);
         $this->assertNull($result->getResolutionDate());
     }
 
@@ -243,6 +246,7 @@ class ReclamationServiceTest extends TestCase
         $service = $this->makeService($repo, $resRepo, $em);
         $result  = $service->addResponse(1, 'We apologise for the inconvenience.');
 
+        $this->assertNotNull($result);
         $this->assertSame('We apologise for the inconvenience.', $result->getAdminResponse());
         $this->assertNotNull($result->getResponseDate());
     }

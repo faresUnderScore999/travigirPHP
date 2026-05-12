@@ -15,8 +15,8 @@ class RefundRequest
 
     private ?int $id = null;
 
-    #[ORM\Column(name: 'reclamation_id', nullable: true)]
-    private ?int $reclamationId = null;
+    #[ORM\Column(name: 'reclamation_id')]
+    private int $reclamationId = 0;
 
     #[ORM\Column(name: 'requester_id')]
     private int $requesterId;
@@ -44,14 +44,14 @@ class RefundRequest
         return $this->id;
     }
 
-    public function getReclamationId(): ?int
+    public function getReclamationId(): int
     {
         return $this->reclamationId;
     }
 
     public function setReclamationId(?int $reclamationId): self
     {
-        $this->reclamationId = $reclamationId;
+        $this->reclamationId = $reclamationId ?? 0;
         return $this;
     }
 

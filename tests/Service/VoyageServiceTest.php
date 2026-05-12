@@ -158,6 +158,7 @@ class VoyageServiceTest extends TestCase
             'price'       => '999.99',
         ]);
 
+        $this->assertNotNull($result);
         $this->assertSame('New Title', $result->getTitle());
         $this->assertSame('Rome, Italy', $result->getDestination());
         $this->assertSame('999.99', $result->getPrice());

@@ -23,7 +23,8 @@ class RefundRequestService
     public function createRefundRequest(array $data): RefundRequest
     {
         $refundRequest = new RefundRequest();
-        $refundRequest->setReclamationId($data['reclamation_id'] ?? 0);
+        $reclamationIdRaw = $data['reclamation_id'] ?? null;
+        $refundRequest->setReclamationId($reclamationIdRaw !== null && (int) $reclamationIdRaw > 0 ? (int) $reclamationIdRaw : 0);
         $refundRequest->setRequesterId($data['requester_id'] ?? 0);
         $refundRequest->setReservationId(isset($data['reservation_id']) ? (int) $data['reservation_id'] : null);
         $refundRequest->setAmount($data['amount'] ?? '0.00');

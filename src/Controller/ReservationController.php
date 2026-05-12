@@ -546,17 +546,50 @@ class ReservationController extends AbstractController
 
                 $this->validationService->clearErrors();
                 $this->validationService->validateRequired(['refund_reason' => $reason], ['refund_reason']);
-                $this->validationService->validateString($reason, 'refund_reason', 10, 500);
+                $this->validationService->validateString($reason, 'refund_reason', 3, 500);
+
+                // When admin acts, use the reservation owner's ID so eligibility passes
+                $refundUserId = $isAdmin ? (int) ($reservation['user_id'] ?? $user['id']) : (int) $user['id'];
 
                 if (!$this->validationService->isValid()) {
                     $errors = $this->validationService->getErrors();
                     $error  = implode(' ', array_map(fn($e) => implode(', ', $e), $errors));
                 } else {
-                    $eligibility = $this->reservationService->evaluateRefundEligibility($id, $user['id']);
+                    $eligibility = $this->reservationService->evaluateRefundEligibility($id, $refundUserId);
                     if (!$eligibility['eligible']) {
                         $error = (string) ($eligibility['reason'] ?? 'Refund request is not eligible.');
-                    } elseif ($this->reservationService->requestRefund($id, $user['id'], $reason)) {
+                    } elseif ($this->reservationService->requestRefund($id, $refundUserId, $reason)) {
                         $success = 'Refund request submitted and awaiting admin review.';
+
+                        // SMS notification
+                        $userEntity = $this->userRepository->find($refundUserId);
+                        $phone = $userEntity?->getTel();
+                        if ($phone) {
+                            try {
+                                $this->bus->dispatch(new SendSmsMessage(
+                                    $phone,
+                                    sprintf('Hello %s, your refund request of %.2f TND for reservation #%d has been submitted and is pending review. – TravelAgency',
+                                        $user['username'] ?? 'Customer',
+                                        (float) ($reservation['total_price'] ?? 0),
+                                        $id
+                                    )
+                                ));
+                            } catch (\Throwable $e) {}
+                        }
+
+                        // Email notification — send to reservation owner, not the admin
+                        $ownerEmail    = $userEntity?->getEmail() ?? ($user['email'] ?? null);
+                        $ownerUsername = $userEntity?->getUsername() ?? ($user['username'] ?? 'Customer');
+                        if ($ownerEmail) {
+                            try {
+                                $this->mailerService->sendRefundConfirmation(
+                                    $ownerEmail,
+                                    $ownerUsername,
+                                    (float) ($reservation['total_price'] ?? 0),
+                                    $id
+                                );
+                            } catch (\Throwable $e) {}
+                        }
                     } else {
                         $error = 'Unable to submit refund request. Please review reservation status and try again.';
                     }

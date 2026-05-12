@@ -42,7 +42,7 @@ class VoyageTest extends TestCase
 
         // Image URL
         $this->assertNull($voyage->getImageUrl());
-        $voyage->setImageUrl(['http://example.com/image.jpg']);
-        $this->assertSame(['http://example.com/image.jpg'], $voyage->getImageUrl());
+        $voyage->setImageUrl('http://example.com/image.jpg');
+        $this->assertSame('http://example.com/image.jpg', $voyage->getImageUrl());
     }
 }

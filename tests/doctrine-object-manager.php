@@ -10,4 +10,6 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $kernel = new Kernel($_SERVER['APP_ENV'] ?? 'test', false);
 $kernel->boot();
 
-return $kernel->getContainer()->get('doctrine')->getManager();
+/** @var \Doctrine\Persistence\ManagerRegistry $doctrine */
+$doctrine = $kernel->getContainer()->get('doctrine');
+return $doctrine->getManager();

@@ -19,3 +19,13 @@
 ###> phpstan/phpstan ###
 phpstan.neon
 ###< phpstan/phpstan ###
+
+# Local debug / one-off scripts
+/add_slug.php
+/check_img.php
+/check_res21.php
+/check_schema.php
+/debug_refund.php
+/debug_symfony_refund.php
+/fix_image_url.php
+/test_refund.php
