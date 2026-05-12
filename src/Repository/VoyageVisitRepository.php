@@ -118,6 +118,7 @@ class VoyageVisitRepository extends ServiceEntityRepository
     /**
      * Find most visited voyages
      * @return array
+     * @return array<mixed>
      */
     public function findMostVisitedVoyages(int $limit = 10): array
     {
@@ -183,6 +184,7 @@ class VoyageVisitRepository extends ServiceEntityRepository
  */
 /**
  * Find most visited voyages with their titles
+ * @return array<mixed>
  */
 public function findMostVisitedVoyagesWithNames(int $limit = 10): array
 {
@@ -199,11 +201,11 @@ public function findMostVisitedVoyagesWithNames(int $limit = 10): array
 
 /**
  * Get paginated visits with voyage titles
+ * @return array<mixed>
  */
 public function findPaginatedWithNames(int $offset, int $limit): array
 {
     return $this->createQueryBuilder('vv')
-        // This selects the VoyageVisit object (index 0) and the title string
         ->select('vv', 'v.title as voyageName')
         ->join('App\Entity\Voyage', 'v', 'WITH', 'vv.voyageId = v.id')
         ->orderBy('vv.visitTime', 'DESC')
@@ -211,5 +213,33 @@ public function findPaginatedWithNames(int $offset, int $limit): array
         ->setMaxResults($limit)
         ->getQuery()
         ->getResult();
+}
+
+/** @return array<mixed> */
+public function getSourceBreakdown(): array
+{
+    return $this->createQueryBuilder('vv')
+        ->select('vv.source, COUNT(vv.id) as cnt')
+        ->groupBy('vv.source')
+        ->orderBy('cnt', 'DESC')
+        ->getQuery()
+        ->getResult();
+}
+
+/** @return array<mixed> */
+public function getVisitsByDay(int $days = 30): array
+{
+    $conn = $this->getEntityManager()->getConnection();
+    $since = (new \DateTime("-{$days} days"))->format('Y-m-d');
+    $sql = 'SELECT DATE(visit_time) as day, COUNT(id) as cnt FROM voyage_visits WHERE visit_time >= :since GROUP BY DATE(visit_time) ORDER BY day ASC';
+    return $conn->executeQuery($sql, ['since' => $since])->fetchAllAssociative();
+}
+
+public function getTotalVisits(): int
+{
+    return (int) $this->createQueryBuilder('vv')
+        ->select('COUNT(vv.id)')
+        ->getQuery()
+        ->getSingleScalarResult();
 }
 }

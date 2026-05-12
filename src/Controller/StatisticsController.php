@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Service\AuthService;
 use App\Service\SearchHistoryService;
 use App\Service\UserLoginService;
-use App\Service\VoyageVisitService;          // <-- ADD THIS
+use App\Service\VoyageVisitService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,7 +26,7 @@ class StatisticsController extends AbstractController
         private readonly AuthService $authService,
         private readonly SearchHistoryService $searchHistoryService,
         private readonly UserLoginService $userLoginService,
-        private readonly VoyageVisitService $voyageVisitService,   // <-- ADD THIS
+        private readonly VoyageVisitService $voyageVisitService,
         private readonly LoggerInterface $logger,
     ) {}
 

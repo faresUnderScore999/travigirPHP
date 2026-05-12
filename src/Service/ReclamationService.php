@@ -4,6 +4,8 @@ namespace App\Service;
 
 use App\Entity\Reclamation;
 use App\Repository\ReclamationRepository;
+use App\Repository\ReservationRepository;
+use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\AuthService;
 use Psr\Log\LoggerInterface;
@@ -12,6 +14,7 @@ class ReclamationService
 {
     public function __construct(
         private readonly ReclamationRepository $reclamationRepository,
+        private readonly ReservationRepository $reservationRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly AuthService $authService,
         private readonly ?LoggerInterface $logger = null,
@@ -19,7 +22,58 @@ class ReclamationService
     }
 
     /**
+     * @return array{eligible: bool, reason?: string}
+     */
+    public function evaluateRefundEligibility(int $reclamationId, int $userId): array
+    {
+        $reclamation = $this->reclamationRepository->find($reclamationId);
+        if (!$reclamation || $reclamation->getUserId() !== $userId) {
+            return ['eligible' => false, 'reason' => 'Reclamation not found for this user.'];
+        }
+
+        $reservationId = $reclamation->getReservationId();
+        if ($reservationId <= 0) {
+            return ['eligible' => false, 'reason' => 'Reclamation has no valid reservation.'];
+        }
+
+        $reservation = $this->reservationRepository->find($reservationId);
+        if (!$reservation || $reservation->getUserId() !== $userId) {
+            return ['eligible' => false, 'reason' => 'Reservation does not belong to this user.'];
+        }
+
+        $reservationStatus = strtoupper((string) $reservation->getStatus());
+        if (!in_array($reservationStatus, ['CONFIRMED', 'COMPLETED', 'CANCELLED'], true)) {
+            return ['eligible' => false, 'reason' => 'Reservation status is not refundable.'];
+        }
+
+        if (strtoupper((string) $reservation->getPaymentStatus()) !== 'PAID') {
+            return ['eligible' => false, 'reason' => 'Only paid reservations are refundable.'];
+        }
+
+        try {
+            $pendingCount = (int) $this->entityManager->createQueryBuilder()
+                ->select('COUNT(rr.id)')
+                ->from('App\\Entity\\RefundRequest', 'rr')
+                ->andWhere('rr.reclamationId = :reclamationId')
+                ->andWhere('rr.status = :status')
+                ->setParameter('reclamationId', $reclamationId)
+                ->setParameter('status', 'PENDING')
+                ->getQuery()
+                ->getSingleScalarResult();
+
+            if ($pendingCount > 0) {
+                return ['eligible' => false, 'reason' => 'A pending refund request already exists for this reclamation.'];
+            }
+        } catch (NoResultException) {
+            // No pending requests found.
+        }
+
+        return ['eligible' => true];
+    }
+
+    /**
      * Create a new reclamation
+     * @param array<mixed> $data
      */
     public function createReclamation(array $data): Reclamation
     {
@@ -33,11 +87,28 @@ class ReclamationService
         $reclamation->setReclamationDate(new \DateTime());
         $reclamation->setCreatedAt(new \DateTime());
         $reclamation->setUpdatedAt(new \DateTime());
+        $reclamation->setResponseDeadline($this->computeDeadline($data['priority'] ?? 'MEDIUM'));
 
         $this->entityManager->persist($reclamation);
         $this->entityManager->flush();
 
         return $reclamation;
+    }
+
+    public static function slaHours(string $priority): int
+    {
+        return match (strtoupper($priority)) {
+            'URGENT' => 4,
+            'HIGH'   => 24,
+            'LOW'    => 120,
+            default  => 72,
+        };
+    }
+
+    private function computeDeadline(string $priority): \DateTime
+    {
+        $hours = self::slaHours($priority);
+        return (new \DateTime())->modify("+{$hours} hours");
     }
 
     /**
@@ -78,6 +149,7 @@ class ReclamationService
         $this->entityManager->flush();
         return $reclamation;
     }
+/** @return array<mixed> */
 public function getPaginatedReclamations(int $page, int $limit, ?string $email = null): array
 {
     return $this->safeExecute(function() use ($page, $limit, $email) {
@@ -97,6 +169,7 @@ public function getPaginatedReclamations(int $page, int $limit, ?string $email =
 }
     /**
      * Get all open reclamations
+     * @return array<mixed>
      */
     public function getOpenReclamations(): array
     {
@@ -105,6 +178,7 @@ public function getPaginatedReclamations(int $page, int $limit, ?string $email =
 
     /**
      * Get urgent reclamations
+     * @return array<mixed>
      */
     public function getUrgentReclamations(): array
     {
@@ -113,6 +187,7 @@ public function getPaginatedReclamations(int $page, int $limit, ?string $email =
 
     /**
      * Get reclamations by user
+     * @return array<mixed>
      */
     public function getReclamationsByUser(int $userId): array
     {

@@ -30,30 +30,40 @@ class UserRepository extends ServiceEntityRepository
     {
         return $this->find($id);
     }
-    // src/Repository/UserRepository.php
-
-// Add these methods inside the class
 
     /**
+     * @param int[] $ids
+     * @return User[]
+     */
+    public function findByIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+        return $this->createQueryBuilder('u')
+            ->where('u.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @param array<string, mixed> $filters
      * @return array{users: User[], total: int}
      */
     public function searchPaginated(array $filters, int $limit, int $offset): array
     {
         $qb = $this->createQueryBuilder('u');
 
-        // Apply filters
         $this->applyUserFilters($qb, $filters);
 
-        // Get total count before pagination
         $countQb = clone $qb;
         $total = (int) $countQb->select('COUNT(u.id)')
             ->getQuery()
             ->getSingleScalarResult();
 
-        // Apply sorting
         $this->applyUserSorting($qb, $filters);
 
-        // Apply pagination
         $qb->setMaxResults($limit)
             ->setFirstResult($offset);
 
@@ -62,33 +72,27 @@ class UserRepository extends ServiceEntityRepository
         return ['users' => $users, 'total' => $total];
     }
 
+    /** @param array<string, mixed> $filters */
     private function applyUserFilters(QueryBuilder $qb, array $filters): void
     {
-        // Search: match username OR email (partial)
         if (!empty($filters['search'])) {
             $qb->andWhere('u.username LIKE :search OR u.email LIKE :search')
                 ->setParameter('search', '%' . $filters['search'] . '%');
         }
-
-   
     }
 
-    // In src/Repository/UserRepository.php
-
-    private const ALLOWED_SORT_FIELDS = ['createdAt', 'username', 'email']; // ← use 'createdAt' not 'created_at'
-
+    /** @param array<string, mixed> $filters */
     private function applyUserSorting(QueryBuilder $qb, array $filters): void
     {
-        $sortField = $filters['sort_by'] ?? 'createdAt';   // ← use 'createdAt'
+        $sortField = $filters['sort_by'] ?? 'createdAt';
         $sortOrder = strtoupper($filters['sort_order'] ?? 'DESC');
 
-        // Allowed fields - match property names
         $allowed = ['createdAt', 'username', 'email'];
         if (!in_array($sortField, $allowed, true)) {
             $sortField = 'createdAt';
         }
         $sortOrder = $sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
-        $qb->orderBy('u.' . $sortField, $sortOrder);  // ← now 'u.createdAt' is correct
+        $qb->orderBy('u.' . $sortField, $sortOrder);
     }
 }

@@ -2,26 +2,27 @@
 
 namespace App\Controller;
 
-use App\Entity\Reservation;
-use App\Controller\AdminController;
+use App\Repository\UserRepository;
+use App\Message\SendSmsMessage;
+use App\Service\MailerService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-/**
- * Controller for admin management of refunds.
- */
 #[Route('/admin')]
 class AdminRefundController extends AbstractController
 {
     public function __construct(
         private readonly AdminController $adminController,
         private readonly EntityManagerInterface $entityManager,
+        private readonly UserRepository $userRepository,
+        private readonly MessageBusInterface $bus,
+        private readonly MailerService $mailerService,
     ) {}
 
-    /** List all refunded reservations */
     #[Route('/refunds', name: 'admin_refunds', methods: ['GET'])]
     public function listRefunds(Request $request): Response
     {
@@ -29,12 +30,6 @@ class AdminRefundController extends AbstractController
             return $adminResp;
         }
 
-        // Previously we queried the Reservation entity for a status of 'REFUNDED'.
-        // The actual refund data is stored in the RefundRequest entity, so we now
-        // fetch all refund requests. Optionally you could filter by status if needed.
-        // Fetch all refund requests using the repository. This works with the
-        // default Doctrine mapping and returns an array of RefundRequest
-        // entities.
         $refunds = $this->entityManager->getRepository(\App\Entity\RefundRequest::class)->findAll();
 
         return $this->render('admin/refunds/list.html.twig', [
@@ -42,7 +37,53 @@ class AdminRefundController extends AbstractController
         ]);
     }
 
-    /** View and edit a single refund */
+    #[Route('/refunds/new', name: 'admin_refund_create', methods: ['GET', 'POST'])]
+    public function createRefund(Request $request): Response
+    {
+        if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
+            return $adminResp;
+        }
+
+        $errors = [];
+
+        if ($request->isMethod('POST')) {
+            $requesterId   = (int) $request->request->get('requester_id', 0);
+            $amount        = trim((string) $request->request->get('amount', ''));
+            $reason        = trim((string) $request->request->get('reason', ''));
+            $status        = strtoupper(trim((string) $request->request->get('status', 'PENDING')));
+            $reclamationId = $request->request->get('reclamation_id', '') !== '' ? (int) $request->request->get('reclamation_id') : null;
+            $reservationId = $request->request->get('reservation_id', '') !== '' ? (int) $request->request->get('reservation_id') : null;
+
+            if ($requesterId <= 0) $errors[] = 'Requester is required.';
+            if (!is_numeric($amount) || (float) $amount <= 0) $errors[] = 'Amount must be a positive number.';
+            if ($reason === '') $errors[] = 'Reason is required.';
+
+            if (empty($errors)) {
+                $refund = new \App\Entity\RefundRequest();
+                $refund->setRequesterId($requesterId);
+                $refund->setAmount(number_format((float) $amount, 2, '.', ''));
+                $refund->setReason($reason);
+                $refund->setStatus($status);
+                $refund->setReclamationId($reclamationId);
+                $refund->setReservationId($reservationId);
+                $refund->setCreatedAt(new \DateTime());
+
+                $this->entityManager->persist($refund);
+                $this->entityManager->flush();
+
+                $this->addFlash('success', 'Refund request created successfully.');
+                return $this->redirectToRoute('admin_refunds');
+            }
+        }
+
+        $users = $this->userRepository->findAll();
+
+        return $this->render('admin/refunds/create.html.twig', [
+            'errors' => $errors,
+            'users'  => $users,
+        ]);
+    }
+
     #[Route('/refunds/{id}', name: 'admin_refund_detail', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
     public function refundDetail(Request $request, int $id): Response
     {
@@ -50,20 +91,56 @@ class AdminRefundController extends AbstractController
             return $adminResp;
         }
 
-        // Load the RefundRequest entity instead of a Reservation. The admin view
-        // is focused on refund requests, not the underlying reservation record.
         $refundRequest = $this->entityManager->getRepository(\App\Entity\RefundRequest::class)->find($id);
         if (!$refundRequest) {
             throw $this->createNotFoundException('Refund request not found.');
         }
 
         if ($request->isMethod('POST')) {
-            $status = $request->request->get('status');
-            if ($status) {
-                $refundRequest->setStatus($status);
+            $status          = $request->request->get('status');
+            $previousStatus  = strtoupper((string) $refundRequest->getStatus());
+            $normalizedStatus = strtoupper(trim((string) $status));
+
+            // Handle partial approved amount
+            $approvedAmountRaw = trim((string) $request->request->get('approved_amount', ''));
+            if ($approvedAmountRaw !== '' && is_numeric($approvedAmountRaw)) {
+                $approvedAmount = number_format((float) $approvedAmountRaw, 2, '.', '');
+                $refundRequest->setApprovedAmount($approvedAmount);
             }
-            // No admin note field exists on RefundRequest; we only allow status updates.
+
+            $refundRequest->setStatus($normalizedStatus);
             $this->entityManager->flush();
+
+            // SMS notification on status change to APPROVED / REJECTED
+            $shouldNotify = in_array($normalizedStatus, ['APPROVED', 'REJECTED'], true)
+                && $normalizedStatus !== $previousStatus;
+
+            if ($shouldNotify) {
+                $requester = $this->userRepository->find($refundRequest->getRequesterId());
+                $phone     = $requester?->getTel();
+                $email     = $requester?->getEmail();
+                $username  = $requester?->getUsername() ?? 'Customer';
+
+                if ($phone) {
+                    $body = $normalizedStatus === 'APPROVED'
+                        ? sprintf('Hello %s, your refund of %.2f TND has been APPROVED. It will be processed in 3-5 days. – TravelAgency', $username, (float) $refundRequest->getAmount())
+                        : sprintf('Hello %s, your refund request has been REJECTED. Contact support for more info. – TravelAgency', $username);
+                    $this->bus->dispatch(new SendSmsMessage($phone, $body));
+                }
+
+                if ($email) {
+                    try {
+                        $this->mailerService->sendRefundStatusUpdate(
+                            $email,
+                            $username,
+                            $normalizedStatus,
+                            (float) $refundRequest->getAmount(),
+                            (int) ($refundRequest->getReservationId() ?? 0)
+                        );
+                    } catch (\Throwable $e) {}
+                }
+            }
+
             $this->addFlash('success', 'Refund request updated.');
             return $this->redirectToRoute('admin_refund_detail', ['id' => $id]);
         }

@@ -3,11 +3,13 @@
 namespace App\Controller;
 
 use App\Service\AuthService;
+use App\Service\CurrencyService;
 use App\Service\ValidationService;
 use App\Service\UserLoginService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -18,8 +20,20 @@ class AuthController extends AbstractController
         private readonly AuthService $authService,
         private readonly ValidationService $validationService,
         private readonly UserLoginService $userLoginService,
+        private readonly CurrencyService $currencyService,
         private readonly LoggerInterface $logger
     ) {}
+
+    #[Route('/set-currency', name: 'set_currency', methods: ['POST'])]
+    public function setCurrency(Request $request): JsonResponse
+    {
+        $currency = strtoupper((string) $request->request->get('currency', ''));
+        if (!preg_match('/^[A-Z]{3}$/', $currency)) {
+            return new JsonResponse(['error' => 'Invalid currency'], 400);
+        }
+        $this->currencyService->setOverride($currency);
+        return new JsonResponse(['currency' => $currency]);
+    }
 
     #[Route('/login', name: 'auth_login', methods: ['GET', 'POST'])]
     public function login(Request $request): Response
@@ -95,6 +109,98 @@ class AuthController extends AbstractController
             'active_nav' => '',
             'email' => $email,
             'error' => $error,
+        ]);
+    }
+
+    #[Route('/forgot-password', name: 'auth_forgot_password', methods: ['GET', 'POST'])]
+    public function forgotPassword(Request $request): Response
+    {
+        $sent  = false;
+        $error = null;
+
+        if ($request->isMethod('POST')) {
+            $email = strtolower(trim((string) $request->request->get('email', '')));
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $error = 'Please enter a valid email address.';
+            } elseif (!$this->authService->emailExists($email)) {
+                // Don't reveal whether email exists — show success either way
+                $sent = true;
+            } else {
+                $token = bin2hex(random_bytes(32));
+                $request->getSession()->set('pwd_reset_token', $token);
+                $request->getSession()->set('pwd_reset_email', $email);
+                $request->getSession()->set('pwd_reset_expires', time() + 3600);
+                $this->logger->info('Password reset requested', ['email' => $email]);
+                $sent = true;
+            }
+        }
+
+        return $this->render('auth/forgot_password.html.twig', [
+            'active_nav' => '',
+            'sent'  => $sent,
+            'error' => $error,
+        ]);
+    }
+
+    #[Route('/reset-password', name: 'auth_reset_password', methods: ['GET', 'POST'])]
+    public function resetPassword(Request $request): Response
+    {
+        $token   = (string) $request->query->get('token', $request->request->get('token', ''));
+        $session = $request->getSession();
+        $error   = null;
+        $success = false;
+
+        $validToken   = $session->get('pwd_reset_token');
+        $resetEmail   = $session->get('pwd_reset_email');
+        $resetExpires = $session->get('pwd_reset_expires', 0);
+
+        if (!$token || $token !== $validToken || time() > $resetExpires) {
+            return $this->render('auth/reset_password.html.twig', [
+                'active_nav' => '',
+                'invalid'    => true,
+                'token'      => '',
+                'error'      => null,
+                'success'    => false,
+            ]);
+        }
+
+        if ($request->isMethod('POST')) {
+            $password  = (string) $request->request->get('password', '');
+            $password2 = (string) $request->request->get('password_confirm', '');
+
+            if (strlen($password) < 8) {
+                $error = 'Password must be at least 8 characters.';
+            } elseif ($password !== $password2) {
+                $error = 'Passwords do not match.';
+            } else {
+                $user = $this->authService->getUserByEmail($resetEmail);
+                if ($user) {
+                    $this->authService->updateProfile(
+                        $user['id'],
+                        $user['username'],
+                        $user['email'],
+                        $user['tel'] ?? '',
+                        $user['image_url'] ?? null,
+                        $password
+                    );
+                    $session->remove('pwd_reset_token');
+                    $session->remove('pwd_reset_email');
+                    $session->remove('pwd_reset_expires');
+                    $this->logger->info('Password reset completed', ['email' => $resetEmail]);
+                    $success = true;
+                } else {
+                    $error = 'Account not found.';
+                }
+            }
+        }
+
+        return $this->render('auth/reset_password.html.twig', [
+            'active_nav' => '',
+            'invalid'    => false,
+            'token'      => $token,
+            'error'      => $error,
+            'success'    => $success,
         ]);
     }
 

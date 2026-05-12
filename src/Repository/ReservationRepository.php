@@ -115,6 +115,46 @@ class ReservationRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    public function sumBookedPeopleByVoyageId(int $voyageId): int
+    {
+        $result = $this->createQueryBuilder('r')
+            ->select('SUM(r.numberOfPeople)')
+            ->where('r.voyageId = :vid')
+            ->andWhere('r.status IN (:statuses)')
+            ->setParameter('vid', $voyageId)
+            ->setParameter('statuses', ['CONFIRMED', 'PENDING'])
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return (int) ($result ?? 0);
+    }
+
+    /**
+     * @param int[] $voyageIds
+     * @return array<int, int>
+     */
+    public function sumBookedPeopleByVoyageIds(array $voyageIds): array
+    {
+        if (empty($voyageIds)) {
+            return [];
+        }
+        $rows = $this->createQueryBuilder('r')
+            ->select('r.voyageId as vid, SUM(r.numberOfPeople) as total')
+            ->where('r.voyageId IN (:vids)')
+            ->andWhere('r.status IN (:statuses)')
+            ->setParameter('vids', $voyageIds)
+            ->setParameter('statuses', ['CONFIRMED', 'PENDING'])
+            ->groupBy('r.voyageId')
+            ->getQuery()
+            ->getArrayResult();
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(int) $row['vid']] = (int) ($row['total'] ?? 0);
+        }
+        return $map;
+    }
+
     /**
      * Get total revenue from confirmed reservations
      */

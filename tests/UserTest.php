@@ -11,7 +11,7 @@ class UserTest extends TestCase
      * Test 1: Validate that password hashing works automatically
      * Rule: The password should never be stored in plain text.
      */
-    public function testPasswordIsHashedAutomatically()
+    public function testPasswordIsHashedAutomatically(): void
     {
         $user = new User();
         $plainPassword = 'mySecurePassword123';
@@ -29,7 +29,7 @@ class UserTest extends TestCase
      * Test 2: Validate Role Management
      * Rule: Every user must have at least ROLE_USER.
      */
-    public function testDefaultRoleUser()
+    public function testDefaultRoleUser(): void
     {
         $user = new User();
         
@@ -43,7 +43,7 @@ class UserTest extends TestCase
      * Test 3: Validate unique roles
      * Rule: Roles should not be duplicated.
      */
-    public function testRolesAreUnique()
+    public function testRolesAreUnique(): void
     {
         $user = new User();
         $user->setRoles(['ROLE_ADMIN', 'ROLE_ADMIN']);
@@ -59,7 +59,7 @@ class UserTest extends TestCase
      * Test 4: Profile Data integrity
      * Rule: Username and Email must be retrievable.
      */
-    public function testUserGettersAndSetters()
+    public function testUserGettersAndSetters(): void
     {
         $user = new User();
         $email = 'test@travigir.com';

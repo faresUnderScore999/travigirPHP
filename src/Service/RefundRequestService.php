@@ -18,12 +18,15 @@ class RefundRequestService
 
     /**
      * Create a new refund request
+     * @param array<mixed> $data
      */
     public function createRefundRequest(array $data): RefundRequest
     {
         $refundRequest = new RefundRequest();
-        $refundRequest->setReclamationId($data['reclamation_id'] ?? 0);
+        $reclamationIdRaw = $data['reclamation_id'] ?? null;
+        $refundRequest->setReclamationId($reclamationIdRaw !== null && (int) $reclamationIdRaw > 0 ? (int) $reclamationIdRaw : 0);
         $refundRequest->setRequesterId($data['requester_id'] ?? 0);
+        $refundRequest->setReservationId(isset($data['reservation_id']) ? (int) $data['reservation_id'] : null);
         $refundRequest->setAmount($data['amount'] ?? '0.00');
         $refundRequest->setReason($data['reason'] ?? null);
         $refundRequest->setStatus('PENDING');
@@ -53,6 +56,7 @@ class RefundRequestService
 
     /**
      * Get pending refund requests
+     * @return array<mixed>
      */
     public function getPendingRequests(): array
     {
@@ -61,6 +65,7 @@ class RefundRequestService
 
     /**
      * Get refund requests by requester
+     * @return array<mixed>
      */
     public function getRequestsByRequester(int $requesterId): array
     {
@@ -81,6 +86,15 @@ class RefundRequestService
     public function countPendingRequests(): int
     {
         return $this->safeExecute(fn () => $this->refundRequestRepository->countPendingRequests(), 0);
+    }
+
+    /**
+     * Get all refund requests for a given reclamation
+     * @return array<mixed>
+     */
+    public function getRequestsByReclamation(int $reclamationId): array
+    {
+        return $this->safeExecute(fn () => $this->refundRequestRepository->findByReclamationId($reclamationId), []);
     }
 
     /**

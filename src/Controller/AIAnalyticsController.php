@@ -14,6 +14,7 @@ class AIAnalyticsController extends AbstractController
 {
     /**
      * Define available tools (functions) for the AI.
+     * @var array<int, array<string, mixed>>
      */
     private array $tools = [
         [
@@ -265,7 +266,7 @@ PROMPT;
 
         // --- Handle tool calls if present ---
         if (isset($choice['tool_calls'])) {
-            $messages[] = $choice; // assistant message with tool_calls
+            $messages[] = $choice;
 
             $toolName = '';
             $toolResult = null;
@@ -276,7 +277,6 @@ PROMPT;
                 $toolName = $functionName;
                 $toolCallId = $toolCall['id'];
 
-                // Execute the requested tool
                 $toolResult = match ($functionName) {
                     'get_top_destinations' => $metrics->getTopDestinations($args['limit'] ?? 5),
                     'get_all_users' => $metrics->getAllUsers($args['limit'] ?? 50),
@@ -331,15 +331,12 @@ PROMPT;
                 ];
             }
 
-            // Second AI call – ask it to explain the tool result
             $explainPrompt = "You just called the function '$toolName'. Please analyze and explain the returned value in detail for the user, including all relevant numbers and insights. Do not just summarize, but provide a thorough breakdown.";
             $messages[] = ['role' => 'user', 'content' => $explainPrompt];
 
             $finalResponse = $ai->chat($messages, $this->tools);
             $finalChoice = $finalResponse['choices'][0]['message'] ?? null;
             $aiAnswer = $finalChoice['content'] ?? '';
-
-            // Generate a readable summary from the raw data
             $summary = $this->formatAnalyticsResult($toolName, $toolResult);
 
             return $this->json([
@@ -362,6 +359,7 @@ PROMPT;
 
     /**
      * Convert raw analytics data into a human‑readable summary for admin users.
+     * @param array<mixed>|string|float|int|null $result
      */
     private function formatAnalyticsResult(string $toolName, array|string|float|int|null $result): string
     {
@@ -373,50 +371,55 @@ PROMPT;
             return $result;
         }
 
+        if (!is_array($result)) {
+            return (string) $result;
+        }
+
         return match ($toolName) {
             'get_full_analytics_snapshot' => $this->formatSnapshotSummary($result),
-            'get_event_type_distribution' => "Event counts: " . json_encode($result),
+            'get_event_type_distribution' => "Event counts: " . (json_encode($result) ?: '{}'),
             'get_search_to_view_conversion_rate' => sprintf(
                 "Conversion rate: %.1f%% (%d searchers → %d viewers)",
-                $result['conversion_rate'] ?? 0,
-                $result['searchers'] ?? 0,
-                $result['viewers'] ?? 0
+                (float) ($result['conversion_rate'] ?? 0),
+                (int) ($result['searchers'] ?? 0),
+                (int) ($result['viewers'] ?? 0)
             ),
             'get_top_voyages_by_visits' => "Top voyages: " . implode(', ', array_column($result, 'title')),
             'get_user_growth_stats' => sprintf(
                 "Total users: %d, new in period: %d (growth %.1f%%)",
-                $result['total_users'] ?? 0,
-                $result['new_users'] ?? 0,
-                $result['growth_rate'] ?? 0
+                (int) ($result['total_users'] ?? 0),
+                (int) ($result['new_users'] ?? 0),
+                (float) ($result['growth_rate'] ?? 0)
             ),
             'get_reservation_summary' => sprintf(
                 "Reservations: %d total, %d confirmed, %d pending, %d cancelled. Revenue: %.2f",
-                $result['total_reservations'] ?? 0,
-                $result['confirmed'] ?? 0,
-                $result['pending'] ?? 0,
-                $result['cancelled'] ?? 0,
-                $result['total_revenue'] ?? 0
+                (int) ($result['total_reservations'] ?? 0),
+                (int) ($result['confirmed'] ?? 0),
+                (int) ($result['pending'] ?? 0),
+                (int) ($result['cancelled'] ?? 0),
+                (float) ($result['total_revenue'] ?? 0)
             ),
-            'get_payment_success_rate' => "Payment success rate: {$result}%",
+            'get_payment_success_rate' => "Payment success rate: " . ($result['rate'] ?? '') . "%",
             'get_reclamation_summary' => sprintf(
                 "Reclamations: %d open, %d in progress, %d resolved, %d high priority",
-                $result['open'] ?? 0,
-                $result['in_progress'] ?? 0,
-                $result['resolved'] ?? 0,
-                $result['high_priority'] ?? 0
+                (int) ($result['open'] ?? 0),
+                (int) ($result['in_progress'] ?? 0),
+                (int) ($result['resolved'] ?? 0),
+                (int) ($result['high_priority'] ?? 0)
             ),
             'get_refund_request_summary' => sprintf(
                 "Refunds: %d pending, %d approved (total %.2f), %d rejected",
-                $result['pending'] ?? 0,
-                $result['approved'] ?? 0,
-                $result['total_approved_amount'] ?? 0,
-                $result['rejected'] ?? 0
+                (int) ($result['pending'] ?? 0),
+                (int) ($result['approved'] ?? 0),
+                (float) ($result['total_approved_amount'] ?? 0),
+                (int) ($result['rejected'] ?? 0)
             ),
             'get_unmet_demand_destinations' => "Unmet demand: " . implode(', ', array_column($result, 'destination')),
-            default => json_encode($result),
+            default => (json_encode($result) ?: '{}'),
         };
     }
 
+    /** @param array<string, mixed> $snapshot */
     private function formatSnapshotSummary(array $snapshot): string
     {
         $lines = [];
@@ -447,6 +450,7 @@ PROMPT;
     /**
      * If the AI's content looks like a tool call JSON, parse it and return an array
      * that mimics the standard tool_calls structure.
+     * @return array<mixed>|null
      */
     private function extractToolCallFromContent(string $content): ?array
     {

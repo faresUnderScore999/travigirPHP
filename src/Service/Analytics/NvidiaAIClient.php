@@ -16,7 +16,12 @@ class NvidiaAIClient
         $this->httpClient = $httpClient ?? \Symfony\Component\HttpClient\HttpClient::create();
     }
 
-    public function chat(array $messages, array $tools = [], bool $enableReasoning = false, ?string $model = null): array 
+    /**
+     * @param array<mixed> $messages
+     * @param array<mixed> $tools
+     * @return array<mixed>
+     */
+    public function chat(array $messages, array $tools = [], bool $enableReasoning = false, ?string $model = null): array
     {
         $body = [
             'model' => $model ?: $this->defaultModel,
