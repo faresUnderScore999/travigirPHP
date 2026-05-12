@@ -7,8 +7,6 @@ use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\ORM\Mapping as ORM;
-// 1. Import these for security protection
-use Symfony\Component\Serializer\Annotation\Ignore;
 use SensitiveParameter;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -26,8 +24,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 100, unique: true)]
     private string $email = '';
 
-    // 2. Ignore this from serialization to stop "Unprotected sensitive field"
-    #[Ignore]
     #[ORM\Column(length: 255)]
     private string $password = '';
 
@@ -98,8 +94,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // 4. Ignore the getter to stop the "Public getter exposes sensitive field" warning
-    #[Ignore]
     public function getPassword(): string
     {
         return $this->password;

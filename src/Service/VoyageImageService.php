@@ -104,7 +104,10 @@ public function createVoyageImage(array $data): ?VoyageImage
                 []
             );
             foreach ($results as $v) {
-                $voyages[$v->getId()] = $v;
+                $vid = $v->getId();
+                if ($vid !== null) {
+                    $voyages[$vid] = $v;
+                }
             }
         }
 

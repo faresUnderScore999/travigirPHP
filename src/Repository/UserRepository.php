@@ -48,6 +48,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
+     * @param array<string, mixed> $filters
      * @return array{users: User[], total: int}
      */
     public function searchPaginated(array $filters, int $limit, int $offset): array
@@ -71,6 +72,7 @@ class UserRepository extends ServiceEntityRepository
         return ['users' => $users, 'total' => $total];
     }
 
+    /** @param array<string, mixed> $filters */
     private function applyUserFilters(QueryBuilder $qb, array $filters): void
     {
         if (!empty($filters['search'])) {
@@ -79,8 +81,7 @@ class UserRepository extends ServiceEntityRepository
         }
     }
 
-    private const ALLOWED_SORT_FIELDS = ['createdAt', 'username', 'email'];
-
+    /** @param array<string, mixed> $filters */
     private function applyUserSorting(QueryBuilder $qb, array $filters): void
     {
         $sortField = $filters['sort_by'] ?? 'createdAt';

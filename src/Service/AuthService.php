@@ -303,6 +303,10 @@ public function getUserByEmail(string $email): ?array
 // Add this method (or modify existing listUsers to be deprecated)
 // src/Service/AuthService.php
 
+/**
+ * @param array<string, mixed> $filters
+ * @return array<string, mixed>
+ */
 public function getPaginatedUsers(int $page, int $limit, array $filters): array
 {
     $offset = ($page - 1) * $limit;
@@ -343,7 +347,7 @@ public function getPaginatedUsers(int $page, int $limit, array $filters): array
     ];
 }
 
-// Remove getUserStats() entirely, or keep it simple without JSON queries:
+/** @return array<string, int> */
 public function getUserStats(): array
 {
     // Return zeros or remove usage

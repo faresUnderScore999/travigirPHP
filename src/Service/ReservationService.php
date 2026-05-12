@@ -11,7 +11,6 @@ use App\Repository\VoyageRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-
 class ReservationService
 {
     public function __construct(
