@@ -3,256 +3,151 @@
 {% block title %}Reserve Voyage | Travagir{% endblock %}
 
 {% block body %}
+<section>
+    <h1>Reserve: {{ voyage.title }}</h1>
+    <p class="lead">Submit your reservation; it will be pending until admin approval.</p>
+
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ type == 'error' ? 'danger' : type }}" style="margin-bottom:12px;">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    {% if error is defined and error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    {% if success is defined and success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+
+    {# High demand banner #}
+    {% if is_high_demand %}
+        <div class="demand-warning">
+            🔥 <strong>High Demand!</strong> {{ active_count }} people already booked this voyage. Secure your spot now.
+        </div>
+    {% endif %}
+
+    <div class="card settings-card">
+        <p><strong>Destination</strong>: {{ voyage.destination }}</p>
+        <p><strong>Dates</strong>: {{ voyage.start_date ? voyage.start_date|date('d M Y') : 'TBD' }} – {{ voyage.end_date ? voyage.end_date|date('d M Y') : 'TBD' }}</p>
+        <p><strong>Base price per person</strong>: {{ voyage.price|number_format(2, '.', ',') }} TND</p>
+        {% if offer %}<p><strong>Active offer</strong>: {{ offer.title }} (–{{ offer.discount_percentage }}% off)</p>{% endif %}
+
+    </div>
+
+    {# Waitlist mode — show join/leave button instead of reservation form #}
+    {% if is_high_demand %}
+        <div class="waitlist-section">
+            <h3>🧾 Voyage is at high demand capacity</h3>
+            <p>This voyage is very popular. You can join the waitlist and we'll notify you by SMS when a spot opens up.</p>
+            {% if is_on_waitlist %}
+                <p class="waitlist-position">
+                    ✅ You are on the waitlist.
+                    {% set position = waitlist_position|default(null) %}
+                    {% if position %}Position: #{{ position }}{% endif %}
+                </p>
+                <form method="post" action="{{ path('waitlist_leave', {id: voyage.id}) }}">
+                    <button type="submit" class="btn btn-secondary">Leave Waitlist</button>
+                </form>
+            {% else %}
+                <form method="post" action="{{ path('waitlist_join', {id: voyage.id}) }}">
+                    <button type="submit" class="btn btn-primary">Join Waitlist</button>
+                </form>
+            {% endif %}
+        </div>
+    {% else %}
+        {# Normal reservation form #}
+        <form method="post" id="reserve-form" data-autosave="reserve-{{ voyage.id }}">
+            <span class="tg-autosave">✅ Draft saved</span>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label for="number_of_people">Number of people</label>
+                <input type="number" id="number_of_people" name="number_of_people" value="1" min="1" max="20" required
+                    onchange="updatePriceBreakdown()" oninput="updatePriceBreakdown()">
+            </div>
+
+            {# Loyalty points redemption #}
+            {% if loyalty_balance > 0 %}
+                <div class="loyalty-box">
+                    <div class="loyalty-pts">⭐ {{ loyalty_balance }} loyalty pts</div>
+                    {% if can_redeem %}
+                        <label class="loyalty-redeem-label">
+                            <input type="checkbox" name="use_loyalty_points" value="1" id="use-points" onchange="updatePriceBreakdown()">
+                            Use 100 pts for an extra <strong>5% discount</strong> on this booking
+                        </label>
+                    {% else %}
+                        <p class="loyalty-hint">{{ 100 - loyalty_balance }} more pts for a 5% discount (earn 1 pt per TND spent)</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {# Live price breakdown #}
+            <div class="price-breakdown" id="price-breakdown">
+                <div class="breakdown-row">
+                    <span>Base price (1 person)</span>
+                    <span id="base-price">{{ voyage.price|number_format(2, '.', ',') }} TND</span>
+                </div>
+                {% if offer %}
+                <div class="breakdown-row discount">
+                    <span>Offer discount (–{{ offer.discount_percentage }}%)</span>
+                    <span id="offer-discount">–{{ ((voyage.price * offer.discount_percentage / 100))|number_format(2, '.', ',') }} TND</span>
+                </div>
+                {% endif %}
+                <div class="breakdown-row loyalty-discount-row" id="loyalty-row" style="display:none;">
+                    <span>Loyalty discount (–5%)</span>
+                    <span id="loyalty-discount-amount">–0.00 TND</span>
+                </div>
+                <div class="breakdown-row total">
+                    <span><strong>Estimated Total</strong></span>
+                    <strong id="total-price">{{ voyage.price|number_format(2, '.', ',') }} TND</strong>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success" style="margin-top:16px;">Reserve Now &amp; Pay</button>
+            <p style="margin-top:10px;font-size:.85rem;color:var(--text-muted);">🔒 You'll be redirected to Flouci's secure payment page to complete your booking.</p>
+        </form>
+    {% endif %}
+</section>
+
 <style>
-    .checkout-wrapper {
-        max-width: 1100px;
-        margin: 40px auto;
-        padding: 0 20px;
-        color: var(--text-primary);
-    }
-
-    .checkout-header {
-        margin-bottom: 30px;
-    }
-
-    .checkout-header h1 {
-        font-size: 2rem;
-        font-weight: 800;
-        margin-bottom: 8px;
-    }
-
-    /* Grid Layout */
-    .checkout-grid {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 30px;
-        align-items: start;
-    }
-
-    /* Panels */
-    .checkout-panel {
-        background: var(--amazon-white);
-        border: 1px solid var(--border-dark);
-        border-radius: 12px;
-        padding: 30px;
-        margin-bottom: 20px;
-    }
-
-    .panel-section-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: var(--amazon-orange-soft);
-        letter-spacing: 1px;
-        margin-bottom: 20px;
-        display: block;
-        border-bottom: 1px solid var(--border-dark);
-        padding-bottom: 10px;
-    }
-
-    /* Trip Details Styling */
-    .trip-info-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 12px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .trip-info-item:last-child { border: none; }
-
-    .trip-label { color: var(--text-muted); font-size: 0.95rem; }
-    .trip-value { font-weight: 600; text-align: right; }
-
-    /* Form Styling */
-    .form-group label {
-        display: block;
-        margin-bottom: 10px;
-        font-weight: 600;
-        color: var(--text-secondary);
-    }
-
-    .modern-input {
-        width: 100%;
-        background: var(--amazon-dark);
-        border: 1px solid var(--border-dark);
-        color: white;
-        padding: 15px;
-        border-radius: 8px;
-        font-size: 1rem;
-        transition: border-color 0.2s;
-    }
-
-    .modern-input:focus {
-        outline: none;
-        border-color: var(--amazon-orange);
-        box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
-    }
-
-    /* Summary Sidebar */
-    .summary-sidebar {
-        position: sticky;
-        top: 100px;
-    }
-
-    .price-breakdown {
-        margin-top: 20px;
-    }
-
-    .total-row {
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 2px solid var(--border-dark);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .total-price {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: var(--amazon-orange);
-    }
-
-    .offer-tag {
-        display: inline-block;
-        background: rgba(255, 153, 0, 0.1);
-        color: var(--amazon-orange);
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        margin-top: 5px;
-    }
-
-    /* Button */
-    .btn-checkout {
-        width: 100%;
-        padding: 18px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 20px;
-        cursor: pointer;
-    }
-
-    @media (max-width: 850px) {
-        .checkout-grid { grid-template-columns: 1fr; }
-        .summary-sidebar { position: static; }
-    }
+.demand-warning { background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; border-radius:10px; padding:14px 18px; margin-bottom:18px; font-size:0.95rem; }
+.waitlist-section { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:12px; padding:24px; margin-top:20px; }
+.waitlist-section h3 { margin:0 0 8px; }
+.waitlist-position { color:#22c55e; font-weight:600; margin:10px 0; }
+.loyalty-box { background:rgba(255,165,0,0.08); border:1px solid rgba(255,165,0,0.25); border-radius:10px; padding:14px 18px; margin-bottom:16px; }
+.loyalty-pts { font-size:1rem; font-weight:700; color:var(--amazon-orange); margin-bottom:6px; }
+.loyalty-redeem-label { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.93rem; }
+.loyalty-hint { font-size:0.83rem; color:var(--text-muted); margin:4px 0 0; }
+.price-breakdown { background:rgba(0,0,0,0.2); border:1px solid var(--border-dark); border-radius:10px; padding:16px 18px; margin-top:8px; }
+.breakdown-row { display:flex; justify-content:space-between; padding:5px 0; font-size:0.92rem; }
+.breakdown-row.discount { color:#22c55e; }
+.breakdown-row.loyalty-discount-row { color:#f59e0b; }
+.breakdown-row.total { border-top:1px solid var(--border-dark); margin-top:6px; padding-top:10px; font-size:1rem; }
 </style>
 
-<div class="checkout-wrapper">
-    <header class="checkout-header">
-        <h1>Secure Reservation</h1>
-        <p class="lead">Confirm your details to initiate your booking request.</p>
-    </header>
-
-    {% if error is defined and error %}
-        <div class="alert alert-error">{{ error }}</div>
-    {% endif %}
-
-    {% if success is defined and success %}
-        <div class="alert alert-success">{{ success }}</div>
-    {% endif %}
-
-    <form method="post" class="checkout-grid">
-        <div class="main-content">
-            <div class="checkout-panel">
-                <span class="panel-section-title">Trip Destination</span>
-                <div class="trip-info-item">
-                    <span class="trip-label">Experience</span>
-                    <span class="trip-value">{{ voyage.title }}</span>
-                </div>
-                <div class="trip-info-item">
-                    <span class="trip-label">Location</span>
-                    <span class="trip-value">{{ voyage.destination }}</span>
-                </div>
-                <div class="trip-info-item">
-                    <span class="trip-label">Itinerary Dates</span>
-                    <span class="trip-value">
-                        {{ voyage.start_date ? voyage.start_date|date('d M Y') : 'TBD' }} 
-                        — 
-                        {{ voyage.end_date ? voyage.end_date|date('d M Y') : 'TBD' }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="checkout-panel">
-                <span class="panel-section-title">Traveler Information</span>
-                <div class="form-group">
-                    <label for="number_of_people">How many people are traveling?</label>
-                    <input type="number" id="number_of_people" name="number_of_people" 
-                           class="modern-input" value="1" min="1" required>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">
-                        Note: Final price will be calculated based on this number.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="summary-sidebar">
-            <div class="checkout-panel">
-                <span class="panel-section-title">Payment Summary</span>
-                
-                <div class="price-breakdown">
-                    <div class="trip-info-item">
-                        <span class="trip-label">Base Rate (per person)</span>
-                        <span class="trip-value">${{ voyage.price|number_format(2) }}</span>
-                    </div>
-
-                    {% if offer %}
-                        <div class="trip-info-item">
-                            <span class="trip-label">Special Offer</span>
-                            <div style="text-align: right;">
-                                <span class="trip-value" style="color: var(--amazon-orange);">
-                                    -{{ offer.discount_percentage }}%
-                                </span><br>
-                                <span class="offer-tag">{{ offer.title }}</span>
-                            </div>
-                        </div>
-                    {% endif %}
-
-                    <div class="total-row">
-                        <span style="font-weight: 700;">Estimate Total</span>
-                        <span class="total-price" id="display-total">
-                            {% set price = voyage.price %}
-                            {% if offer %}
-                                {% set price = price * (1 - (offer.discount_percentage / 100)) %}
-                            {% endif %}
-                            ${{ price|number_format(2) }}
-                        </span>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-register btn-checkout">
-                    Complete Reservation
-                </button>
-                
-                <p style="text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 15px;">
-                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 5px;">
-                        <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-                    </svg>
-                    Your request requires admin approval.
-                </p>
-            </div>
-        </div>
-    </form>
-</div>
-
 <script>
-    // Optional: Real-time price update for the UI
-    const input = document.getElementById('number_of_people');
-    const display = document.getElementById('display-total');
-    const basePrice = {{ voyage.price }};
-    const discount = {{ offer ? (1 - (offer.discount_percentage / 100)) : 1 }};
+var basePrice  = {{ voyage.price|default(0) }};
+var offerDiscount = {{ offer ? offer.discount_percentage : 0 }} / 100;
 
-    input.addEventListener('input', () => {
-        const total = (basePrice * discount * input.value).toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        display.innerText = `$${total}`;
-    });
+function updatePriceBreakdown() {
+    var n = parseInt(document.getElementById('number_of_people').value) || 1;
+    var usePoints = document.getElementById('use-points') ? document.getElementById('use-points').checked : false;
+    var loyaltyDiscount = usePoints ? 0.05 : 0;
+
+    var base  = basePrice * n;
+    var after = base * (1 - offerDiscount) * (1 - loyaltyDiscount);
+
+    document.getElementById('base-price').textContent = base.toFixed(2) + ' TND';
+
+    if (offerDiscount > 0) {
+        document.getElementById('offer-discount').textContent = '–' + (base * offerDiscount).toFixed(2) + ' TND';
+    }
+
+    var loyaltyRow = document.getElementById('loyalty-row');
+    if (loyaltyRow) {
+        loyaltyRow.style.display = usePoints ? 'flex' : 'none';
+        var afterOffer = base * (1 - offerDiscount);
+        document.getElementById('loyalty-discount-amount').textContent = '–' + (afterOffer * 0.05).toFixed(2) + ' TND';
+    }
+
+    document.getElementById('total-price').textContent = after.toFixed(2) + ' TND';
+}
+
+updatePriceBreakdown();
 </script>
 {% endblock %}

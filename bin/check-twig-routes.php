@@ -12,6 +12,7 @@ $kernel->boot();
 $container = $kernel->getContainer();
 
 // Get router service (public alias)
+/** @var \Symfony\Component\Routing\RouterInterface $router */
 $router = $container->get('router');
 
 $templateDir = __DIR__ . '/../templates';
@@ -31,7 +32,10 @@ foreach ($iterator as $file) {
     }
     
     $content = file_get_contents($file->getPathname());
-    
+    if ($content === false) {
+        continue;
+    }
+
     // Check path() calls
     preg_match_all('/path\([\'\"]([^\'\"]+)[\'\"]/', $content, $pathMatches);
     foreach ($pathMatches[1] as $routeName) {

@@ -132,14 +132,14 @@ class Voyage
         return $this;
     }
 
-    public function getImageUrl(): ?array
+    public function getImageUrl(): ?string
     {
-      return null;
+        return $this->imageUrl;
     }
 
-    public function setImageUrl(?array $imageUrl): self
+    public function setImageUrl(?string $imageUrl): self
     {
-     
+        $this->imageUrl = $imageUrl;
 
         return $this;
     }
@@ -167,5 +167,6 @@ class Voyage
     {
         return $this->offers;
     }
+
 }
 
