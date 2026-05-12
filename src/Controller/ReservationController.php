@@ -13,7 +13,6 @@ use App\Service\ValidationService;
 use Symfony\Component\Messenger\MessageBusInterface;
 use App\Service\MailerService;
 use App\Service\VoyageService;
-use App\Service\WaitlistService;
 use App\Service\WeatherService;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -32,7 +31,6 @@ class ReservationController extends AbstractController
         private readonly OfferService $offerService,
         private readonly AdminController $adminController,
         private readonly ValidationService $validationService,
-        private readonly WaitlistService $waitlistService,
         private readonly WeatherService $weatherService,
         private readonly AiCancellationService $aiCancellationService,
         private readonly LoyaltyPointsService $loyaltyPointsService,
@@ -74,9 +72,6 @@ class ReservationController extends AbstractController
         $offers = array_filter($this->offerService->getActiveOffers(), fn($o) => (int) $o['voyage_id'] === $id);
         $activeOffer = $offers ? array_values($offers)[0] : null;
 
-        $isHighDemand    = $this->waitlistService->isHighDemand($id);
-        $isOnWaitlist    = $this->waitlistService->isOnWaitlist($user['id'], $id);
-        $activeCount     = $this->waitlistService->getActiveReservationCount($id);
         $loyaltyBalance  = $this->loyaltyPointsService->getBalance($user['id']);
         $canRedeem       = $this->loyaltyPointsService->canRedeem($user['id']);
 
@@ -162,9 +157,6 @@ class ReservationController extends AbstractController
             'offer'           => $activeOffer,
             'error'           => null,
             'success'         => null,
-            'is_high_demand'  => $isHighDemand,
-            'is_on_waitlist'  => $isOnWaitlist,
-            'active_count'    => $activeCount,
             'loyalty_balance' => $loyaltyBalance,
             'can_redeem'      => $canRedeem,
         ]);
@@ -518,22 +510,6 @@ class ReservationController extends AbstractController
                     : $this->reservationService->cancelReservation($id, $user['id']);
 
                 if ($cancelled) {
-                    // Notify next person on waitlist
-                    $nextEntry = $this->waitlistService->getNextEntry($voyageId);
-                    if ($nextEntry) {
-                        $waitlistUser = $this->userRepository->find($nextEntry->getUserId());
-                        if ($waitlistUser?->getTel()) {
-                            $this->bus->dispatch(new SendSmsMessage(
-                                $waitlistUser->getTel(),
-                                sprintf(
-                                    'Good news, %s! A spot just opened up for "%s". Log in now to secure your reservation before it\'s gone! – TravelAgency',
-                                    $waitlistUser->getUsername() ?: 'Traveller',
-                                    $reservation['voyage_title'] ?? 'your trip'
-                                )
-                            ));
-                        }
-                        $this->waitlistService->markNotified((int) $nextEntry->getId());
-                    }
                     $this->addFlash('success', 'Reservation successfully cancelled.');
                     return $this->redirectToRoute('account_bookings');
                 } else {

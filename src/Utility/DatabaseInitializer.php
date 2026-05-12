@@ -268,20 +268,6 @@ CREATE TABLE IF NOT EXISTS favorites (
     CONSTRAINT fk_favorites_voyage FOREIGN KEY (voyage_id) REFERENCES voyages(id) ON DELETE CASCADE
 )");
 
-            /* ── Reviews ── */
-            $this->connection->executeStatement("
-CREATE TABLE IF NOT EXISTS reviews (
-    id $pk,
-    voyage_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    rating INTEGER NOT NULL,
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_review UNIQUE(voyage_id, user_id),
-    CONSTRAINT fk_reviews_voyage FOREIGN KEY (voyage_id) REFERENCES voyages(id) ON DELETE CASCADE,
-    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)");
-
             /* ── Loyalty points ── */
             $this->connection->executeStatement("
 CREATE TABLE IF NOT EXISTS loyalty_points (
@@ -290,19 +276,6 @@ CREATE TABLE IF NOT EXISTS loyalty_points (
     points INTEGER DEFAULT 0,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_loyalty_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)");
-
-            /* ── Waitlist ── */
-            $this->connection->executeStatement("
-CREATE TABLE IF NOT EXISTS waitlist_entries (
-    id $pk,
-    voyage_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    notified BOOLEAN DEFAULT FALSE,
-    CONSTRAINT unique_waitlist UNIQUE(voyage_id, user_id),
-    CONSTRAINT fk_waitlist_voyage FOREIGN KEY (voyage_id) REFERENCES voyages(id) ON DELETE CASCADE,
-    CONSTRAINT fk_waitlist_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )");
 
             $this->logger->info('Database schema verified/initialized successfully.');
