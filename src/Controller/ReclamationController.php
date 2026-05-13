@@ -53,9 +53,9 @@ class ReclamationController extends AbstractController
     #[Route('/admin/reclamations/{id}/ai-suggest', name: 'admin_reclamation_ai_suggest', methods: ['GET'])]
     public function aiSuggest(Request $request, int $id, AiResponseSuggestionService $aiSuggestion): JsonResponse
     {
-        // if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
-        //     return $this->json(['error' => 'Unauthorized'], 403);
-        // }
+        if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
+            return $this->json(['error' => 'Unauthorized'], 403);
+        }
 
         $reclamation = $this->reclamationService->getReclamationById($id);
         if (!$reclamation) {
