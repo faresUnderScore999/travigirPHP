@@ -2,10 +2,13 @@
 
 namespace App\Controller;
 
+use App\Service\AiResponseSuggestionService;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Entity\Reclamation;
 use App\Service\ReclamationService;
 use App\Service\ValidationService;
 use App\Service\ReservationService;
+use App\Repository\UserRepository;
 use App\Controller\AdminController;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,10 +27,11 @@ class ReclamationController extends AbstractController
 {
     public function __construct(
         private readonly ReclamationService $reclamationService,
-    private readonly ValidationService $validationService,
-    private readonly AdminController $adminController,
-    private readonly EntityManagerInterface $entityManager,
-    private readonly ReservationService $reservationService,
+        private readonly ValidationService $validationService,
+        private readonly AdminController $adminController,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ReservationService $reservationService,
+        private readonly UserRepository $userRepository,
     ) {}
 
     // ---------------------------------------------------------------------
@@ -46,7 +50,26 @@ class ReclamationController extends AbstractController
         }
         return null;
     }
+    #[Route('/admin/reclamations/{id}/ai-suggest', name: 'admin_reclamation_ai_suggest', methods: ['GET'])]
+    public function aiSuggest(Request $request, int $id, AiResponseSuggestionService $aiSuggestion): JsonResponse
+    {
+        // if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
+        //     return $this->json(['error' => 'Unauthorized'], 403);
+        // }
 
+        $reclamation = $this->reclamationService->getReclamationById($id);
+        if (!$reclamation) {
+            return $this->json(['error' => 'Reclamation not found'], 404);
+        }
+
+        try {
+            $suggestion = $aiSuggestion->suggestForReclamation($reclamation);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+
+        return $this->json(['suggestion' => $suggestion]);
+    }
     // ---------------------------------------------------------------------
     // USER ENDPOINTS
     // ---------------------------------------------------------------------
@@ -129,44 +152,56 @@ class ReclamationController extends AbstractController
     // ---------------------------------------------------------------------
     // ADMIN ENDPOINTS
     // ---------------------------------------------------------------------
-#[Route('/admin/reclamations', name: 'admin_reclamations', methods: ['GET'])]
-public function adminList(Request $request): Response
-{
-    if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
-        return $adminResp;
-    }
-
-    // Get parameters from URL
-    $page = $request->query->getInt('page', 1);
-    $limit = $request->query->getInt('limit', 10);
-    $email = $request->query->get('email'); // Filter by email
-
-    $pagination = $this->reclamationService->getPaginatedReclamations($page, $limit, $email);
-
-    return $this->render('admin/reclamations/list.html.twig', [
-        'reclamations' => $pagination['data'],
-        'totalItems'   => $pagination['totalItems'],
-        'totalPages'   => $pagination['totalPages'],
-        'currentPage'  => $pagination['currentPage'],
-        'limit'        => $limit,
-        'currentEmail' => $email, // Pass back to keep it in the search box
-    ]);
-}
-
-    #[Route('/admin/reclamations/{id}', name: 'admin_reclamation_detail', requirements: ['id' => '\\d+'], methods: ['GET'])]
-    public function adminDetail(Request $request, int $id): Response
+    #[Route('/admin/reclamations', name: 'admin_reclamations', methods: ['GET'])]
+    public function adminList(Request $request): Response
     {
         if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
             return $adminResp;
         }
-        $reclamation = $this->reclamationService->getReclamationById($id);
-        if (!$reclamation) {
-            throw $this->createNotFoundException('Reclamation not found.');
-        }
-        return $this->render('admin/reclamations/detail.html.twig', [
-            'reclamation' => $reclamation,
+
+        // Get parameters from URL
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+        $email = $request->query->get('email'); // Filter by email
+
+        $pagination = $this->reclamationService->getPaginatedReclamations($page, $limit, $email);
+
+        return $this->render('admin/reclamations/list.html.twig', [
+            'reclamations' => $pagination['data'],
+            'totalItems'   => $pagination['totalItems'],
+            'totalPages'   => $pagination['totalPages'],
+            'currentPage'  => $pagination['currentPage'],
+            'limit'        => $limit,
+            'currentEmail' => $email, // Pass back to keep it in the search box
         ]);
     }
+
+  #[Route('/admin/reclamations/{id}', name: 'admin_reclamation_detail', requirements: ['id' => '\\d+'], methods: ['GET'])]
+public function adminDetail(Request $request, int $id): Response
+{
+    if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
+        return $adminResp;
+    }
+    $reclamation = $this->reclamationService->getReclamationById($id);
+    if (!$reclamation) {
+        throw $this->createNotFoundException('Reclamation not found.');
+    }
+
+    // Fetch user email from the stored userId
+    $userEmail = null;
+    $userId = $reclamation->getUserId();
+    if ($userId) {
+        $user = $this->userRepository->find($userId);
+        if ($user) {
+            $userEmail = $user->getEmail();
+        }
+    }
+
+    return $this->render('admin/reclamations/detail.html.twig', [
+        'reclamation' => $reclamation,
+        'userEmail'   => $userEmail,   // <-- pass to template
+    ]);
+}
 
     #[Route('/admin/reclamations/{id}/response', name: 'admin_reclamation_response', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function adminAddResponse(Request $request, int $id): Response

@@ -203,7 +203,38 @@ class AIAnalyticsController extends AbstractController
             ],
         ],
     ];
+#[Route('/test', name: 'ai_test', methods: ['GET', 'POST'])]
+    public function test(Request $request, NvidiaAIClient $aiClient): JsonResponse
+    {
+        // For GET requests, use a default test message
+        if ($request->isMethod('GET')) {
+            $userMessage = 'Say hello and tell me you are working.';
+        } else {
+            // For POST, read JSON body
+            $data = json_decode($request->getContent(), true);
+            $userMessage = $data['message'] ?? 'What is the capital of France?';
+        }
 
+        try {
+            $response = $aiClient->chat([
+                ['role' => 'user', 'content' => $userMessage]
+            ]);
+
+            $reply = $response['choices'][0]['message']['content'] ?? 'No reply';
+
+            return $this->json([
+                'success' => true,
+                'your_message' => $userMessage,
+                'ai_reply' => $reply,
+                'usage' => $response['usage'] ?? null
+            ]);
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
     #[Route('/ask', name: 'ai_ask', methods: ['POST'])]
     public function ask(Request $request, MetricsService $metrics, NvidiaAIClient $ai): JsonResponse
     {

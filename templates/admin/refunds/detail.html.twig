@@ -1,32 +1,215 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Admin – Refund Detail{% endblock %}
+{% block title %}Admin – Refund #{{ refund.id }}{% endblock %}
 
 {% block body %}
-    <h1>Refund Detail</h1>
+<style>
+    .refund-detail-wrapper {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+        font-family: 'Inter', -apple-system, sans-serif;
+        color: var(--text-primary);
+    }
+
+    /* Header & Navigation */
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .back-link {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--amazon-orange); }
+
+    .detail-header h1 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin: 5px 0 0;
+    }
+
+    /* Main Info Card */
+    .refund-card {
+        background: var(--amazon-white);
+        border: 1px solid var(--border-dark);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        margin-bottom: 25px;
+    }
+
+    .card-section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--amazon-orange-soft);
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding-bottom: 10px;
+    }
+
+    /* Summary Grid */
+    .refund-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .data-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .data-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .amount-highlight {
+        color: #4ade80;
+        font-family: 'Courier New', monospace;
+        font-size: 1.4rem;
+    }
+
+    /* Reason Box */
+    .reason-box {
+        background: var(--amazon-dark);
+        border-radius: 8px;
+        padding: 20px;
+        border-left: 4px solid var(--amazon-orange);
+        line-height: 1.6;
+        margin-top: 10px;
+    }
+
+    /* Status Action Panel */
+    .action-panel {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-dark);
+        border-radius: 12px;
+        padding: 25px;
+    }
+
+    .status-select-wrapper {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .modern-select {
+        background: var(--amazon-dark);
+        border: 1px solid var(--border-dark);
+        color: white;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-size: 1rem;
+        min-width: 200px;
+        cursor: pointer;
+    }
+
+    .modern-select:focus { border-color: var(--amazon-orange); outline: none; }
+
+    /* Badges */
+    .status-pill {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .status-pending { background: rgba(255, 153, 0, 0.1); color: var(--amazon-orange); }
+    .status-approved { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+    .status-rejected { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+
+</style>
+
+<div class="refund-detail-wrapper">
     {% if refund %}
-        <div class="admin-table-container">
-            <table class="admin-table">
-                <tbody>
-                    <tr><th>ID</th><td>{{ refund.id }}</td></tr>
-                    <tr><th>Requester ID</th><td>{{ refund.requesterId|default('') }}</td></tr>
-                    <tr><th>Amount</th><td>{{ refund.amount|default('') }}</td></tr>
-                    <tr><th>Reason</th><td>{{ refund.reason|default('') }}</td></tr>
-                    <tr><th>Status</th><td>{{ refund.status }}</td></tr>
-                    <tr><th>Created At</th><td>{{ refund.createdAt ? refund.createdAt|date('Y-m-d H:i') : '' }}</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <h2>Update Refund Status</h2>
-        <form method="post" action="{{ path('admin_refund_detail', {'id': refund.id}) }}">
-            <div class="form-group">
-                <label for="status">Status</label>
-                <input type="text" id="status" name="status" class="form-control" value="{{ refund.status }}" />
+        <div class="detail-header">
+            <div>
+                <a href="{{ path('admin_refunds') }}" class="back-link">← Back to Refunds</a>
+                <h1>Refund #{{ refund.id }}</h1>
             </div>
-            <button type="submit" class="btn btn-success">Save Changes</button>
-        </form>
-        <p><a href="{{ path('admin_refunds') }}" class="btn btn-primary">Back to Refunds</a></p>
+            <div class="status-pill status-{{ refund.status|lower }}">
+                Current Status: {{ refund.status }}
+            </div>
+        </div>
+
+        <div class="refund-card">
+            <div class="card-section-title">Financial Summary</div>
+         <div class="refund-summary-grid">
+    <div>
+        <span class="data-label">Requester</span>
+        <div class="data-value">
+            {% if requester %}
+                <strong>{{ requester.username }}</strong><br>
+                <span style="font-size: 0.85rem; color: var(--amazon-orange-soft);">
+                    {{ requester.email }}
+                </span>
+            {% else %}
+                User ID: {{ refund.requesterId|default('N/A') }}
+            {% endif %}
+        </div>
+    </div>
+    <div>
+        <span class="data-label">Amount to Refund</span>
+        <div class="data-value amount-highlight">${{ refund.amount|default('0.00')|number_format(2) }}</div>
+    </div>
+    <div>
+        <span class="data-label">Submission Date</span>
+        <div class="data-value" style="font-size: 0.95rem;">
+            {{ refund.createdAt ? refund.createdAt|date('M d, Y') : '—' }}
+            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ refund.createdAt ? refund.createdAt|date('H:i') : '' }}</div>
+        </div>
+    </div>
+</div>
+
+            <div class="card-section-title">Reason for Request</div>
+            <div class="reason-box">
+                {{ refund.reason|default('No detailed reason was provided for this request.')|nl2br }}
+            </div>
+        </div>
+
+        <div class="action-panel">
+            <div class="card-section-title" style="margin-bottom: 15px;">Administrative Decision</div>
+            <form method="post" action="{{ path('admin_refund_detail', {'id': refund.id}) }}">
+                <div class="status-select-wrapper">
+                    <div style="flex-grow: 1;">
+                        <label class="data-label" for="status">Change Status To:</label>
+                        <select id="status" name="status" class="modern-select" style="width: 100%;">
+                            <option value="PENDING" {{ refund.status == 'PENDING' ? 'selected' }}>⏳ Keep as Pending</option>
+                            <option value="APPROVED" {{ refund.status == 'APPROVED' ? 'selected' }}>✅ Approve Refund</option>
+                            <option value="REJECTED" {{ refund.status == 'REJECTED' ? 'selected' }}>❌ Reject Request</option>
+                            <option value="COMPLETED" {{ refund.status == 'COMPLETED' ? 'selected' }}>🏁 Mark as Completed</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-login" style="padding: 13px 30px; border-radius: 8px;">
+                        Save Decision
+                    </button>
+                </div>
+            </form>
+        </div>
+
     {% else %}
-        <p>Refund not found.</p>
+        <div class="refund-card" style="text-align: center; padding: 60px;">
+            <div style="font-size: 3rem;">⚠️</div>
+            <h2>Refund Not Found</h2>
+            <p>The request you are looking for may have been removed or the ID is incorrect.</p>
+            <a href="{{ path('admin_refunds') }}" class="btn btn-primary" style="margin-top: 20px;">Back to List</a>
+        </div>
     {% endif %}
+</div>
 {% endblock %}

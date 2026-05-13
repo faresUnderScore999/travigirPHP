@@ -6,6 +6,7 @@ use App\Entity\RefundRequest;
 use App\Repository\RefundRequestRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use App\Service\AuthService;
 
 class RefundRequestService
 {
@@ -13,6 +14,7 @@ class RefundRequestService
         private readonly RefundRequestRepository $refundRequestRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ?LoggerInterface $logger = null,
+        private readonly AuthService $authService, 
     ) {
     }
 

@@ -3,35 +3,186 @@
 {% block title %}Admin – Refunds{% endblock %}
 
 {% block body %}
-    <h1>All Refund Requests (Admin)</h1>
+<style>
+    .admin-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -0.5px;
+    }
+
+    /* Table Container */
+    .table-card {
+        background: var(--amazon-white);
+        border: 1px solid var(--border-dark);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--text-primary);
+    }
+
+    .admin-table th {
+        background: rgba(255, 255, 255, 0.02);
+        padding: 16px 20px;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border-dark);
+        text-align: left;
+    }
+
+    .admin-table td {
+        padding: 18px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    .admin-table tr:hover {
+        background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Amount Styling */
+    .amount-cell {
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        color: #4ade80; 
+        font-size: 1rem;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        border: 1px solid transparent;
+    }
+
+    .status-pending { background: rgba(255, 153, 0, 0.1); color: var(--amazon-orange); border-color: rgba(255, 153, 0, 0.3); }
+    .status-approved { background: rgba(74, 222, 128, 0.1); color: #4ade80; border-color: rgba(74, 222, 128, 0.3); }
+    .status-rejected { background: rgba(248, 113, 113, 0.1); color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
+
+    /* Text Truncation for Reasons */
+    .reason-text {
+        max-width: 250px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .id-link {
+        color: var(--amazon-orange);
+        text-decoration: none;
+        font-weight: 700;
+        background: rgba(255, 153, 0, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+
+    .id-link:hover {
+        background: var(--amazon-orange);
+        color: var(--amazon-dark);
+    }
+
+    .empty-state {
+        padding: 80px;
+        text-align: center;
+        background: var(--amazon-white);
+        border-radius: 12px;
+        border: 1px dashed var(--border-dark);
+        color: var(--text-muted);
+    }
+</style>
+
+<div class="admin-container">
+    <header class="page-header">
+        <h1>Refund Requests</h1>
+        <p style="color: var(--text-muted); margin-top: 5px;">Manage and process customer refund applications.</p>
+    </header>
+
     {% if refunds|length > 0 %}
-        <div class="admin-table-container">
-        <table class="admin-table">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Requester ID</th>
-                <th>Amount</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Created At</th>
-            </tr>
-            </thead>
-        <tbody>
-                {% for r in refunds %}
-                <tr>
-                    <td><a href="{{ path('admin_refund_detail', {'id': r.id}) }}">{{ r.id }}</a></td>
-                    <td>{{ r.requesterId|default('') }}</td>
-                    <td>{{ r.amount|default('') }}</td>
-                    <td>{{ r.reason|default('') }}</td>
-                    <td>{{ r.status }}</td>
-                    <td>{{ r.createdAt ? r.createdAt|date('Y-m-d H:i') : '' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-card">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Requester Details</th>
+                        <th>Amount</th>
+                        <th>Reason for Refund</th>
+                        <th>Status</th>
+                        <th>Submitted On</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in refunds %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('admin_refund_detail', {'id': r.id}) }}" class="id-link">
+                                    #{{ r.id }}
+                                </a>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600;">ID: {{ r.requesterId|default('N/A') }}</div>
+                                <div style="font-size: 0.8rem; color: var(--amazon-orange-soft); margin-top: 2px;">
+                                {{ emailMap[r.requesterId]|default('No email provided') }}
+                                </div>
+                            </td>
+                            <td class="amount-cell">
+                                ${{ r.amount|default('0.00')|number_format(2) }}
+                            </td>
+                            <td>
+                                <div class="reason-text" title="{{ r.reason }}">
+                                    {{ r.reason|default('No reason provided') }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ r.status|lower }}">
+                                    {{ r.status|replace({'_': ' '})|title }}
+                                </span>
+                            </td>
+                            <td style="color: var(--text-muted); font-size: 0.8rem;">
+                                {{ r.createdAt ? r.createdAt|date('d M Y') : '—' }}<br>
+                                <small>{{ r.createdAt ? r.createdAt|date('H:i') : '' }}</small>
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{{ path('admin_refund_detail', {'id': r.id}) }}" class="btn btn-login" style="padding: 6px 15px; font-size: 0.75rem;">
+                                    Review
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     {% else %}
-        <p>No refund requests found.</p>
+        <div class="empty-state">
+            <div style="font-size: 3rem; margin-bottom: 20px;">💳</div>
+            <h3>No pending requests</h3>
+            <p>There are currently no refund requests requiring your attention.</p>
+        </div>
     {% endif %}
+</div>
 {% endblock %}

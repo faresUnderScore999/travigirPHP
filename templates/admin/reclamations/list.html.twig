@@ -3,66 +3,241 @@
 {% block title %}Admin – Reclamations{% endblock %}
 
 {% block body %}
-    <h1>All Reclamations (Admin)</h1>
+<style>
+    .admin-container {
+        max-width: 1300px;
+        margin: 40px auto;
+        padding: 0 20px;
+        font-family: 'Inter', -apple-system, sans-serif;
+        color: var(--text-primary);
+    }
+
+    /* Dashboard Header & Filter Bar */
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .filter-bar {
+        display: flex;
+        gap: 10px;
+        background: var(--amazon-white);
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid var(--border-dark);
+    }
+
+    .search-input {
+        background: var(--amazon-dark);
+        border: 1px solid var(--border-dark);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 6px;
+        min-width: 250px;
+        font-size: 0.9rem;
+    }
+
+    /* Table Styling */
+    .table-wrapper {
+        background: var(--amazon-white);
+        border-radius: 12px;
+        border: 1px solid var(--border-dark);
+        overflow: hidden; /* Clips the corners of the table */
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+
+    .admin-table th {
+        background: rgba(255, 255, 255, 0.03);
+        padding: 16px 20px;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border-dark);
+    }
+
+    .admin-table td {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+    }
+
+    .admin-table tr:hover {
+        background: rgba(255, 153, 0, 0.02);
+    }
+
+    /* Text Truncation for Description */
+    .truncate {
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    /* Badge Logic */
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: inline-block;
+        border: 1px solid transparent;
+    }
+    .status-open { background: rgba(96, 165, 250, 0.1); color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); }
+    .status-resolved { background: rgba(74, 222, 128, 0.1); color: #4ade80; border-color: rgba(74, 222, 128, 0.3); }
+    
+    .priority-high { color: #f87171; font-weight: 800; }
+    .priority-medium { color: var(--amazon-orange); }
+
+    /* Action Link */
+    .view-link {
+        color: var(--amazon-orange);
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .view-link:hover { text-decoration: underline; }
+
+    /* Pagination */
+    .pagination-container {
+        margin-top: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .pagination-btn {
+        background: var(--amazon-white);
+        border: 1px solid var(--border-dark);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .pagination-btn:hover {
+        border-color: var(--amazon-orange);
+        background: rgba(255, 153, 0, 0.05);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        color: var(--text-muted);
+    }
+</style>
+
+<div class="admin-container">
+    <div class="dashboard-header">
+        <h1>Support Tickets</h1>
+        
+        <form method="get" action="{{ path('admin_reclamations') }}" class="filter-bar">
+            <input type="email" name="email" value="{{ currentEmail }}" 
+                   class="search-input" placeholder="Filter by customer email...">
+            <button type="submit" class="btn btn-login" style="padding: 8px 15px;">Search</button>
+            {% if currentEmail %}
+                <a href="{{ path('admin_reclamations') }}" class="btn btn-secondary" style="padding: 8px 15px;">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
     {% if reclamations|length > 0 %}
-    <form method="get" action="{{ path('admin_reclamations') }}" style="margin-bottom: 20px;">
-    <input type="email" name="email" value="{{ currentEmail }}" placeholder="Filter by User Email...">
-    <button type="submit">Search</button>
-    {% if currentEmail %}
-        <a href="{{ path('admin_reclamations') }}">Clear</a>
-    {% endif %}
-</form>
-        <div class="admin-table-container">
+    <div class="table-wrapper">
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Reservation ID</th>
-                    <th>User ID</th>
-                    <th>Title</th>
-                    <th>Description</th>
+                    <th>Ticket</th>
+                    <th>Customer / Booking</th>
+                    <th>Topic</th>
                     <th>Status</th>
-                    <th>Priority</th>
-                    <th>Created At</th>
-                    <th>Updated At</th>
-                    <th>Admin Response</th>
-                    <th>Response Date</th>
-                    <th>Resolution Date</th>
+                    <th>Urgency</th>
+                    <th>Last Update</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for rec in reclamations %}
                     <tr>
-                        <td>{{ rec.id }}</td>
-                        <td>{{ rec.reservationId }}</td>
-                        <td>{{ rec.userId }}</td>
-                        <td><a href="{{ path('admin_reclamation_detail', {'id': rec.id}) }}">{{ rec.title }}</a></td>
-                        <td>{{ rec.description }}</td>
-                        <td>{{ rec.status }}</td>
-                        <td>{{ rec.priority }}</td>
-                        <td>{{ rec.createdAt ? rec.createdAt|date('Y-m-d H:i') : '' }}</td>
-                        <td>{{ rec.updatedAt ? rec.updatedAt|date('Y-m-d H:i') : '' }}</td>
-                        <td>{{ rec.adminResponse|default('') }}</td>
-                        <td>{{ rec.responseDate ? rec.responseDate|date('Y-m-d H:i') : '' }}</td>
-                        <td>{{ rec.resolutionDate ? rec.resolutionDate|date('Y-m-d H:i') : '' }}</td>
+                        <td style="font-weight: 700;">#{{ rec.id }}</td>
+                        <td>
+                            <div style="font-weight: 600;">UID: {{ rec.userId }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Booking: #{{ rec.reservationId }}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; color: white;">{{ rec.title }}</div>
+                            <div class="truncate">{{ rec.description }}</div>
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ rec.status|lower }}">
+                                {{ rec.status|replace({'_': ' '}) }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="priority-{{ rec.priority|lower }}">
+                                {{ rec.priority|default('MEDIUM') }}
+                            </span>
+                        </td>
+                        <td style="font-size: 0.8rem; color: var(--text-muted);">
+                            {{ rec.updatedAt ? rec.updatedAt|date('d M Y') : rec.createdAt|date('d M Y') }}
+                        </td>
+                        <td>
+                            <a href="{{ path('admin_reclamation_detail', {'id': rec.id}) }}" class="view-link">
+                                Manage ↗
+                            </a>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <div class="pagination-container">
+        <div style="color: var(--text-muted); font-size: 0.85rem;">
+            Showing Page <strong>{{ currentPage }}</strong> of {{ totalPages }}
         </div>
-        {# 2. Pagination Controls #}
-<div class="pagination">
-    {% if currentPage > 1 %}
-        <a href="{{ path('admin_reclamations', {page: currentPage - 1, email: currentEmail, limit: limit}) }}">Previous</a>
-    {% endif %}
+        
+        <div style="display: flex; gap: 8px;">
+            {% if currentPage > 1 %}
+                <a href="{{ path('admin_reclamations', {page: currentPage - 1, email: currentEmail, limit: limit}) }}" class="pagination-btn">Previous</a>
+            {% endif %}
 
-    <span>Page {{ currentPage }} of {{ totalPages }}</span>
+            {% if currentPage < totalPages %}
+                <a href="{{ path('admin_reclamations', {page: currentPage + 1, email: currentEmail, limit: limit}) }}" class="pagination-btn">Next</a>
+            {% endif %}
+        </div>
+    </div>
 
-    {% if currentPage < totalPages %}
-        <a href="{{ path('admin_reclamations', {page: currentPage + 1, email: currentEmail, limit: limit}) }}">Next</a>
+    {% else %}
+        <div class="table-wrapper empty-state">
+            <div style="font-size: 3rem; margin-bottom: 15px;">🔍</div>
+            <h3>No tickets found</h3>
+            <p>Adjust your search or filter to find what you're looking for.</p>
+        </div>
     {% endif %}
 </div>
-    {% else %}
-        <p>No reclamations found.</p>
-    {% endif %}
 {% endblock %}
