@@ -36,7 +36,14 @@ services:
         arguments:
             $apiKey:  '%env(string:RAPIDAPI_KEY)%'
             $apiHost: '%env(string:RAPIDAPI_BOOKING_HOST)%'
-   
+    App\Service\AiChatService:
+        arguments:
+            $aiClient: '@App\Service\Analytics\NvidiaAIClient'
+            $voyageService: '@App\Service\VoyageService'
+            $offerService: '@App\Service\OfferService'
+
+    App\Controller\AiChatController:
+        tags: ['controller.service_arguments']
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
