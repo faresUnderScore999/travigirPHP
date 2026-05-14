@@ -7,7 +7,6 @@ class NvidiaAIClient
 {
     private HttpClientInterface $httpClient;
     private string $apiKeyNvidia;
-    private string $endpoint = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
     public function __construct(string $apiKeyNvidia)
     {
@@ -15,29 +14,31 @@ class NvidiaAIClient
         $this->httpClient = \Symfony\Component\HttpClient\HttpClient::create();
     }
 
-// src/Service/Analytics/NvidiaAIClient.php
+    /**
+     * @param array<int, array<string, mixed>> $messages
+     * @param array<int, mixed> $tools
+     * @return array<string, mixed>
+     */
+    public function chat(array $messages, array $tools = []): array
+    {
+        $body = [
+            'model' => 'nvidia/nemotron-3-nano-30b-a3b',
+            'messages' => $messages,
+            'temperature' => 0.2,
+        ];
 
-// src/Service/Analytics/NvidiaAIClient.php
-public function chat(array $messages, array $tools = []): array 
-{
-    $body = [
-        'model' => 'nvidia/nemotron-3-nano-30b-a3b', // Ensure you use an 'instruct' model
-        'messages' => $messages,
-        'temperature' => 0.2,
-    ];
+        if (!empty($tools)) {
+            $body['tools'] = $tools;
+        }
 
-    if (!empty($tools)) {
-        $body['tools'] = $tools;
+        $response = $this->httpClient->request('POST', 'https://integrate.api.nvidia.com/v1/chat/completions', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->apiKeyNvidia,
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $body
+        ]);
+
+        return $response->toArray();
     }
-
-    $response = $this->httpClient->request('POST', 'https://integrate.api.nvidia.com/v1/chat/completions', [
-        'headers' => [
-            'Authorization' => 'Bearer ' . $this->apiKeyNvidia,
-            'Content-Type' => 'application/json',
-        ],
-        'json' => $body
-    ]);
-
-    return $response->toArray();
-}
 }

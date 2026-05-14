@@ -15,6 +15,9 @@ class CloudinaryService
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function uploadImageFile(UploadedFile $file, ?string $publicId = null, ?string $folder = null): array
     {
         $this->ensureConfigured();
@@ -70,6 +73,9 @@ class CloudinaryService
         return $response;
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     private function buildSignature(array $params): string
     {
         unset($params['api_key']);
@@ -86,6 +92,9 @@ class CloudinaryService
         return sha1(implode('&', $parts) . $this->apiSecret);
     }
 
+    /**
+     * @param array<string, mixed> $postFields
+     */
     private function sendRequest(array $postFields): string
     {
         $endpoint = sprintf('https://api.cloudinary.com/v1_1/%s/image/upload', $this->cloudName);

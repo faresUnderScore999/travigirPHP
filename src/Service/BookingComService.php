@@ -18,6 +18,9 @@ class BookingComService
         private readonly LoggerInterface $logger,
     ) {}
 
+    /**
+     * @return array<int, mixed>
+     */
     public function searchFlightDestinations(string $query): array
     {
         return $this->cache->get('flight_dest_' . md5($query), function (ItemInterface $item) use ($query) {
@@ -27,6 +30,9 @@ class BookingComService
         });
     }
 
+    /**
+     * @return array<int, mixed>
+     */
     public function searchHotelDestinations(string $query): array
     {
         return $this->cache->get('hotel_dest_' . md5($query), function (ItemInterface $item) use ($query) {
@@ -36,6 +42,10 @@ class BookingComService
         });
     }
 
+    /**
+     * @param array<string, mixed> $params
+     * @return array<int, array<string, mixed>>
+     */
     public function searchFlights(array $params): array
     {
         $data = $this->request('/api/v1/flights/searchFlights', array_filter([
@@ -52,6 +62,10 @@ class BookingComService
         return array_map([$this, 'mapFlight'], $offers);
     }
 
+    /**
+     * @param array<string, mixed> $params
+     * @return array<int, array<string, mixed>>
+     */
     public function searchHotels(array $params): array
     {
         $data = $this->request('/api/v1/hotels/searchHotels', array_filter([
@@ -68,6 +82,10 @@ class BookingComService
         return array_map([$this, 'mapHotel'], $hotels);
     }
 
+    /**
+     * @param array<string, mixed> $offer
+     * @return array<string, mixed>
+     */
     private function mapFlight(array $offer): array
     {
         $segments = $offer['segments'] ?? [];
@@ -102,6 +120,10 @@ class BookingComService
         ];
     }
 
+    /**
+     * @param array<string, mixed> $item
+     * @return array<string, mixed>
+     */
     private function mapHotel(array $item): array
     {
         $prop  = $item['property'] ?? [];
@@ -131,6 +153,10 @@ class BookingComService
         return $h . 'h ' . str_pad((string)$m, 2, '0', STR_PAD_LEFT) . 'm';
     }
 
+    /**
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
     private function request(string $path, array $params = []): array
     {
         $url = self::BASE_URL . $path . '?' . http_build_query($params);

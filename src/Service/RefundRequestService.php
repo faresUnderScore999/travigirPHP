@@ -13,13 +13,14 @@ class RefundRequestService
     public function __construct(
         private readonly RefundRequestRepository $refundRequestRepository,
         private readonly EntityManagerInterface $entityManager,
+        /** @phpstan-ignore property.onlyWritten */
+        private readonly AuthService $authService,
         private readonly ?LoggerInterface $logger = null,
-        private readonly AuthService $authService, 
     ) {
     }
 
     /**
-     * Create a new refund request
+     * @param array<string, mixed> $data
      */
     public function createRefundRequest(array $data): RefundRequest
     {
@@ -54,7 +55,7 @@ class RefundRequestService
     }
 
     /**
-     * Get pending refund requests
+     * @return RefundRequest[]
      */
     public function getPendingRequests(): array
     {
@@ -62,7 +63,7 @@ class RefundRequestService
     }
 
     /**
-     * Get refund requests by requester
+     * @return RefundRequest[]
      */
     public function getRequestsByRequester(int $requesterId): array
     {

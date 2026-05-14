@@ -98,10 +98,7 @@ class ActivityService
     }
 
     /**
-     * Get all activities for admin
-     */
-    /**
-     * @return Activity[]
+     * @return array<int, array<string, mixed>>
      */
     public function getAllActivitiesForAdmin(): array
     {
@@ -162,7 +159,7 @@ class ActivityService
     }
 
     /**
-     * Normalize a single activity for output
+     * @return array<string, mixed>
      */
     private function normalizeActivity(Activity $activity, bool $includeVoyageInfo): array
     {

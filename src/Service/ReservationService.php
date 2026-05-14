@@ -22,6 +22,9 @@ class ReservationService
     ) {
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function createReservation(int $userId, int $voyageId, ?int $offerId, int $numberOfPeople, float $totalPrice): ?array
     {
         if ($numberOfPeople <= 0 || $totalPrice < 0) {
@@ -72,18 +75,25 @@ class ReservationService
         }
     }
 
- public function getReservationsForUser(int $userId): array
-{
-    try {
-        $reservations = $this->reservationRepository->findByUserId($userId);
-        return array_map(function ($reservation) {
-            return $this->reservationToArrayWithVoyage($reservation);  // ← Changed!
-        }, $reservations);
-    } catch (\Throwable $e) {
-        $this->logger->error('Failed to get reservations for user', ['error' => $e->getMessage(), 'user_id' => $userId]);
-        return [];
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getReservationsForUser(int $userId): array
+    {
+        try {
+            $reservations = $this->reservationRepository->findByUserId($userId);
+            return array_map(function ($reservation) {
+                return $this->reservationToArrayWithVoyage($reservation);
+            }, $reservations);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to get reservations for user', ['error' => $e->getMessage(), 'user_id' => $userId]);
+            return [];
+        }
     }
-}
+
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getReservationById(int $reservationId, int $userId): ?array
     {
         try {
@@ -99,6 +109,9 @@ class ReservationService
         }
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getReservationByUserAndVoyage(int $userId, int $voyageId): ?array
     {
         try {
@@ -186,42 +199,45 @@ class ReservationService
         }
     }
 
-public function listAllReservations(): array
-{
-    try {
-        $reservations = $this->reservationRepository->findAll();
-        $result = [];
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function listAllReservations(): array
+    {
+        try {
+            $reservations = $this->reservationRepository->findAll();
+            $result = [];
 
-        foreach ($reservations as $reservation) {
-            $user = $this->userRepository->findById($reservation->getUserId());
-            $voyage = $this->voyageRepository->findById($reservation->getVoyageId());
+            foreach ($reservations as $reservation) {
+                $user = $this->userRepository->findById($reservation->getUserId());
+                $voyage = $this->voyageRepository->findById($reservation->getVoyageId());
 
-            $result[] = [
-                'id' => $reservation->getId(),
-                'user_id' => $reservation->getUserId(),
-                'user_name' => $user ? $user->getUsername() : null,
-                'voyage_id' => $reservation->getVoyageId(),
-                'voyage_title' => $voyage ? $voyage->getTitle() : null,
-                'offer_id' => $reservation->getOfferId(),
-                'reservation_date' => $reservation->getReservationDate(),
-                'number_of_people' => $reservation->getNumberOfPeople(),
-                'total_price' => $reservation->getTotalPrice(),
-                'status' => $reservation->getStatus(),
-                'special_requests' => $reservation->getSpecialRequests(),
-                'payment_status' => $reservation->getPaymentStatus(),
-                'payment_date' => $reservation->getPaymentDate(),
-                'updated_at' => $reservation->getUpdatedAt(),
-                'user_email' => $user ? $user->getEmail() : null,
-                'destination' => $voyage ? $voyage->getDestination() : null, 
-            ];
+                $result[] = [
+                    'id' => $reservation->getId(),
+                    'user_id' => $reservation->getUserId(),
+                    'user_name' => $user ? $user->getUsername() : null,
+                    'voyage_id' => $reservation->getVoyageId(),
+                    'voyage_title' => $voyage ? $voyage->getTitle() : null,
+                    'offer_id' => $reservation->getOfferId(),
+                    'reservation_date' => $reservation->getReservationDate(),
+                    'number_of_people' => $reservation->getNumberOfPeople(),
+                    'total_price' => $reservation->getTotalPrice(),
+                    'status' => $reservation->getStatus(),
+                    'special_requests' => $reservation->getSpecialRequests(),
+                    'payment_status' => $reservation->getPaymentStatus(),
+                    'payment_date' => $reservation->getPaymentDate(),
+                    'updated_at' => $reservation->getUpdatedAt(),
+                    'user_email' => $user ? $user->getEmail() : null,
+                    'destination' => $voyage ? $voyage->getDestination() : null, 
+                ];
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to list all reservations', ['error' => $e->getMessage()]);
+            return [];
         }
-
-        return $result;
-    } catch (\Throwable $e) {
-        $this->logger->error('Failed to list all reservations', ['error' => $e->getMessage()]);
-        return [];
     }
-}
 
     public function confirmReservation(int $reservationId, int $userId): bool
     {
@@ -245,6 +261,9 @@ public function listAllReservations(): array
         }
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getReservationByIdAdmin(int $reservationId): ?array
     {
         try {
@@ -274,7 +293,7 @@ public function listAllReservations(): array
         }
 
         try {
-             $refundRequest = $this->refundRequestService->createRefundRequest([
+             $this->refundRequestService->createRefundRequest([
         'reclamation_id' => null,
         'requester_id' => $userId,
         'amount' => $reservation->getTotalPrice(),
@@ -288,7 +307,7 @@ public function listAllReservations(): array
     }
 
     /**
-     * Convert Reservation entity to array with basic fields
+     * @return array<string, mixed>
      */
     private function reservationToArray(Reservation $reservation): array
     {
@@ -307,7 +326,7 @@ public function listAllReservations(): array
     }
 
     /**
-     * Convert Reservation entity to array with voyage details
+     * @return array<string, mixed>
      */
     private function reservationToArrayWithVoyage(Reservation $reservation): array
     {
@@ -331,7 +350,7 @@ public function listAllReservations(): array
     }
 
     /**
-     * Convert Reservation entity to array with user and voyage details
+     * @return array<string, mixed>
      */
     private function reservationToArrayWithUserAndVoyage(Reservation $reservation): array
     {

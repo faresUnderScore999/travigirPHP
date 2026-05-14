@@ -41,7 +41,7 @@ class UserAssociationService
     }
 
     /**
-     * Get users by association
+     * @return UserAssociation[]
      */
     public function getUsersByAssociation(int $associationId): array
     {

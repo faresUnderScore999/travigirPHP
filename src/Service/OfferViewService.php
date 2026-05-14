@@ -50,7 +50,7 @@ class OfferViewService
     }
 
     /**
-     * Get views for an offer
+     * @return OfferView[]
      */
     public function getViewsByOffer(int $offerId): array
     {
@@ -66,7 +66,7 @@ class OfferViewService
     }
 
     /**
-     * Get most viewed offers
+     * @return array<int, array<string, mixed>>
      */
     public function getMostViewedOffers(int $limit = 10): array
     {

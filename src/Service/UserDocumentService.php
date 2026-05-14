@@ -17,7 +17,7 @@ class UserDocumentService
     }
 
     /**
-     * Create or update user document
+     * @param array<string, mixed> $data
      */
     public function saveDocument(int $userId, array $data): UserDocument
     {
@@ -71,7 +71,7 @@ class UserDocumentService
     }
 
     /**
-     * Get all expiring passports
+     * @return UserDocument[]
      */
     public function getExpiringPassports(int $months = 6): array
     {

@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 
 class ValidationService
 {
+    /** @var array<string, array<int, string>> */
     private array $errors = [];
 
     public function __construct(
@@ -14,7 +15,8 @@ class ValidationService
     }
 
     /**
-     * Validate required fields
+     * @param array<string, mixed> $data
+     * @param array<int, string> $requiredFields
      */
     public function validateRequired(array $data, array $requiredFields): self
     {
@@ -188,7 +190,7 @@ class ValidationService
     }
 
     /**
-     * Get all validation errors
+     * @return array<string, array<int, string>>
      */
     public function getErrors(): array
     {
@@ -196,7 +198,7 @@ class ValidationService
     }
 
     /**
-     * Get errors for a specific field
+     * @return array<int, string>
      */
     public function getFieldErrors(string $field): array
     {
@@ -223,7 +225,7 @@ class ValidationService
     }
 
     /**
-     * Validate voyage data (business rules)
+     * @param array<string, mixed> $data
      */
     public function validateVoyage(array $data): self
     {
@@ -263,7 +265,7 @@ class ValidationService
     }
 
     /**
-     * Validate user registration data
+     * @param array<string, mixed> $data
      */
     public function validateUserRegistration(array $data): self
     {
@@ -287,13 +289,11 @@ class ValidationService
             $this->validateString($data['password'], 'password', 6);
         }
 
-     
-
         return $this;
     }
 
     /**
-     * Validate login data
+     * @param array<string, mixed> $data
      */
     public function validateLogin(array $data): self
     {

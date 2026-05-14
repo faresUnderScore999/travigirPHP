@@ -39,6 +39,8 @@ class MetricsService
 
     /**
      * Conversion rate: distinct users who viewed a voyage / distinct users who searched.
+     *
+     * @return array{searchers: int, viewers: int, conversion_rate: float}
      */
     public function getSearchToViewConversionRate(string $startDate, string $endDate): array
     {
@@ -75,6 +77,8 @@ class MetricsService
 
     /**
      * Top destinations based on search queries (first word).
+     *
+     * @return array<int, array{destination: string, search_count: int}>
      */
     public function getTopSearchedDestinations(int $limit = 5): array
     {
@@ -93,6 +97,8 @@ class MetricsService
 
     /**
      * Unmet demand: destinations searched but not present in voyages.
+     *
+     * @return array<int, array{destination: string, search_count: int}>
      */
     public function getUnmetDemandDestinations(int $limit = 5): array
     {
@@ -119,6 +125,8 @@ class MetricsService
 
     /**
      * Top voyages by visit count (from voyage_visits).
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getTopVoyagesByVisits(int $limit = 10): array
     {
@@ -136,6 +144,8 @@ class MetricsService
 
     /**
      * Best performing voyage (highest visits) – alias for convenience.
+     *
+     * @return array<string, mixed>|null
      */
     public function getBestVoyage(): ?array
     {
@@ -145,6 +155,8 @@ class MetricsService
 
     /**
      * Detailed information for a specific voyage (by ID or title partial match).
+     *
+     * @return array<string, mixed>|null
      */
     public function getVoyageDetails(string $identifier): ?array
     {
@@ -169,6 +181,8 @@ class MetricsService
 
     /**
      * User growth statistics.
+     *
+     * @return array{period: array{start: string, end: string}, total_users: int, new_users: int, growth_rate: float}
      */
     public function getUserGrowthStats(string $startDate, string $endDate): array
     {
@@ -233,6 +247,8 @@ class MetricsService
 
     /**
      * Reservation summary (counts by status, total revenue).
+     *
+     * @return array{total_reservations: int, confirmed: int, pending: int, cancelled: int, total_revenue: float}
      */
     public function getReservationSummary(string $startDate, string $endDate): array
     {
@@ -279,6 +295,8 @@ class MetricsService
 
     /**
      * Payment status distribution.
+     *
+     * @return array<string, int>
      */
     public function getPaymentStatusDistribution(string $startDate, string $endDate): array
     {
@@ -326,6 +344,8 @@ class MetricsService
 
     /**
      * Reclamation summary (counts by status, priority).
+     *
+     * @return array{total: int, open: int, in_progress: int, resolved: int, high_priority: int}
      */
     public function getReclamationSummary(string $startDate, string $endDate): array
     {
@@ -368,6 +388,8 @@ class MetricsService
 
     /**
      * Refund request summary.
+     *
+     * @return array{total: int, pending: int, approved: int, rejected: int, total_approved_amount: float}
      */
     public function getRefundRequestSummary(string $startDate, string $endDate): array
     {
@@ -400,6 +422,8 @@ class MetricsService
 
     /**
      * Active offers count and average discount.
+     *
+     * @return array{total_active: int, avg_discount: float}
      */
     public function getActiveOffersStats(): array
     {
@@ -421,6 +445,8 @@ class MetricsService
 
     /**
      * Most claimed offers (via user_offers).
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getTopClaimedOffers(int $limit = 5): array
     {
@@ -437,6 +463,8 @@ class MetricsService
 
     /**
      * Most popular activities (by name, across voyages).
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getMostPopularActivities(int $limit = 5): array
     {
@@ -451,56 +479,59 @@ class MetricsService
         ';
         return $this->connection->fetchAllAssociative($sql, ['limit' => $limit]);
     }
-    // src/Service/Analytics/MetricsService.php
 
-// Add these methods inside the existing class
+    /**
+     * Get top destinations (by voyage visit count).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getTopDestinations(int $limit = 5): array
+    {
+        $sql = '
+            SELECT v.destination, COUNT(vv.id) as visit_count
+            FROM voyages v
+            LEFT JOIN voyage_visits vv ON v.id = vv.voyage_id
+            GROUP BY v.destination
+            ORDER BY visit_count DESC
+            LIMIT :limit
+        ';
+        return $this->connection->fetchAllAssociative($sql, ['limit' => $limit]);
+    }
 
-/**
- * Get top destinations (by voyage visit count).
- */
-public function getTopDestinations(int $limit = 5): array
-{
-    $sql = '
-        SELECT v.destination, COUNT(vv.id) as visit_count
-        FROM voyages v
-        LEFT JOIN voyage_visits vv ON v.id = vv.voyage_id
-        GROUP BY v.destination
-        ORDER BY visit_count DESC
-        LIMIT :limit
-    ';
-    return $this->connection->fetchAllAssociative($sql, ['limit' => $limit]);
-}
+    /**
+     * Get all users (basic info) – limited to 50 for performance.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getAllUsers(int $limit = 50): array
+    {
+        $sql = '
+            SELECT id, username, email, tel, created_at
+            FROM users
+            ORDER BY id
+            LIMIT :limit
+        ';
+        return $this->connection->fetchAllAssociative($sql, ['limit' => $limit]);
+    }
 
-/**
- * Get all users (basic info) – limited to 50 for performance.
- */
-public function getAllUsers(int $limit = 50): array
-{
-    $sql = '
-        SELECT id, username, email, tel, created_at
-        FROM users
-        ORDER BY id
-        LIMIT :limit
-    ';
-    return $this->connection->fetchAllAssociative($sql, ['limit' => $limit]);
-}
-
-/**
- * Get voyages ordered by number of associated reclamations.
- */
-public function getVoyagesWithMostReclamations(int $limit = 5): array
-{
-    $sql = '
-        SELECT v.id, v.title, v.destination, COUNT(r.id) as reclamation_count
-        FROM voyages v
-        JOIN reservations res ON v.id = res.voyage_id
-        JOIN reclamations r ON res.id = r.reservation_id
-        GROUP BY v.id, v.title, v.destination
-        ORDER BY reclamation_count DESC
-        LIMIT :limit
-    ';
-    return $this->connection->fetchAllAssociative($sql, ['limit' => $limit]);
-}
+    /**
+     * Get voyages ordered by number of associated reclamations.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getVoyagesWithMostReclamations(int $limit = 5): array
+    {
+        $sql = '
+            SELECT v.id, v.title, v.destination, COUNT(r.id) as reclamation_count
+            FROM voyages v
+            JOIN reservations res ON v.id = res.voyage_id
+            JOIN reclamations r ON res.id = r.reservation_id
+            GROUP BY v.id, v.title, v.destination
+            ORDER BY reclamation_count DESC
+            LIMIT :limit
+        ';
+        return $this->connection->fetchAllAssociative($sql, ['limit' => $limit]);
+    }
 
     // -------------------------------------------------------------------------
     // 8. Comprehensive snapshot for AI / dashboard
@@ -508,6 +539,8 @@ public function getVoyagesWithMostReclamations(int $limit = 5): array
 
     /**
      * Returns a full 360° analytics snapshot for a given period (default: last 30 days).
+     *
+     * @return array<string, mixed>
      */
     public function getFullAnalyticsSnapshot(?string $startDate = null, ?string $endDate = null): array
     {
