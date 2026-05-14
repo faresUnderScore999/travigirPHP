@@ -12,8 +12,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 #[Route('/api/ai')]
 class AIAnalyticsController extends AbstractController
 {
+     /**
+      * Define available tools (functions) for the AI.
+      */
     /**
-     * Define available tools (functions) for the AI.
+     * @var array<int, array<string, mixed>>
      */
     private array $tools = [
         [
@@ -394,6 +397,9 @@ PROMPT;
     /**
      * Convert raw analytics data into a human‑readable summary for admin users.
      */
+    /**
+     * @param array<string, mixed>|string|float|int|null $result
+     */
     private function formatAnalyticsResult(string $toolName, array|string|float|int|null $result): string
     {
         if (is_null($result)) {
@@ -448,6 +454,9 @@ PROMPT;
         };
     }
 
+    /**
+     * @param array<string, mixed> $snapshot
+     */
     private function formatSnapshotSummary(array $snapshot): string
     {
         $lines = [];
@@ -478,6 +487,9 @@ PROMPT;
     /**
      * If the AI's content looks like a tool call JSON, parse it and return an array
      * that mimics the standard tool_calls structure.
+     */
+    /**
+     * @return array<int, mixed>|null
      */
     private function extractToolCallFromContent(string $content): ?array
     {

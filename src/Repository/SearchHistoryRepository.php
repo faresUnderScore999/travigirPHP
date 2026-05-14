@@ -124,6 +124,9 @@ $totalItems = (int) $countQueryBuilder
      * Get most popular search queries
      * @return array
      */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function findMostPopularQueries(int $limit = 10): array
     {
         return $this->createQueryBuilder('sh')
@@ -138,6 +141,9 @@ $totalItems = (int) $countQueryBuilder
     /**
      * Get search analytics by type
      * @return array
+     */
+    /**
+     * @return array<int, array<string, mixed>>
      */
     public function getSearchAnalyticsByType(): array
     {

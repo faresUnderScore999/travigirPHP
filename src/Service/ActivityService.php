@@ -21,6 +21,9 @@ class ActivityService
     /**
      * Create a new activity
      */
+    /**
+     * @param array<string, mixed> $data
+     */
     public function createActivity(array $data): ?Activity
     {
         $voyage = $this->voyageRepository->find($data['voyage_id'] ?? 0);
@@ -43,6 +46,9 @@ class ActivityService
 
     /**
      * Update an existing activity
+     */
+    /**
+     * @param array<string, mixed> $data
      */
     public function updateActivity(int $id, array $data): ?Activity
     {
@@ -94,6 +100,9 @@ class ActivityService
     /**
      * Get all activities for admin
      */
+    /**
+     * @return Activity[]
+     */
     public function getAllActivitiesForAdmin(): array
     {
         $activities = $this->safeExecute(fn () => $this->activityRepository->findAll(), []);
@@ -103,6 +112,9 @@ class ActivityService
 
     /**
      * Get activity by ID for admin
+     */
+    /**
+     * @return array<string, mixed>|null
      */
     public function getActivityByIdForAdmin(int $id): ?array
     {
@@ -118,6 +130,9 @@ class ActivityService
     /**
      * Get activities by voyage ID
      */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getActivitiesByVoyageId(int $voyageId): array
     {
         $activities = $this->safeExecute(
@@ -132,6 +147,10 @@ class ActivityService
      * Normalize activities for output
      * @param Activity[] $activities
      * @return array
+     */
+    /**
+     * @param Activity[] $activities
+     * @return array<int, array<string, mixed>>
      */
     private function normalizeActivities(array $activities, bool $includeVoyageInfo): array
     {

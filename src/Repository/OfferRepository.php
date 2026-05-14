@@ -29,7 +29,10 @@ class OfferRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
-public function findByVoyageId(int $voyageId, bool $onlyActive = true): array
+    /**
+     * @return array<int, Offer>
+     */
+    public function findByVoyageId(int $voyageId, bool $onlyActive = true): array
 {
     $qb = $this->createQueryBuilder('o')
         ->andWhere('o.voyage = :voyageId')

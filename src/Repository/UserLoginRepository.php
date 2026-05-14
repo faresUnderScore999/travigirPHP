@@ -120,6 +120,9 @@ class UserLoginRepository extends ServiceEntityRepository
      * Get login statistics
      * @return array
      */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getLoginStatistics(): array
     {
         return $this->createQueryBuilder('ul')
@@ -128,27 +131,28 @@ class UserLoginRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
-// src/Repository/UserLoginRepository.php
 
-public function findPaginatedLogins(int $page, int $limit): array
-{
-    $offset = ($page - 1) * $limit;
+    /**
+     * @return array<int, UserLogin>
+     */
+    public function findPaginatedLogins(int $page, int $limit): array
+    {
+        $offset = ($page - 1) * $limit;
+        return $this->createQueryBuilder('ul')
+            ->orderBy('ul.loginTime', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 
-    return $this->createQueryBuilder('ul')
-        ->orderBy('ul.loginTime', 'DESC')
-        ->setFirstResult($offset)
-        ->setMaxResults($limit)
-        ->getQuery()
-        ->getResult();
-}
-
-public function countAllLogins(): int
-{
-    return $this->createQueryBuilder('ul')
-        ->select('count(ul.id)')
-        ->getQuery()
-        ->getSingleScalarResult();
-}
+    public function countAllLogins(): int
+    {
+        return $this->createQueryBuilder('ul')
+            ->select('count(ul.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
     /**
      * Find suspicious logins (different IPs in short time)
      * @return UserLogin[]

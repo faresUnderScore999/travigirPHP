@@ -47,6 +47,10 @@ public function findById(int $id): ?Voyage
      * Advanced search with filters
      * @return Voyage[]
      */
+    /**
+     * @param array<string, mixed> $filters
+     * @return Voyage[]
+     */
     public function search(array $filters): array
     {
         $qb = $this->createQueryBuilder('v');
@@ -60,6 +64,9 @@ public function findById(int $id): ?Voyage
     /**
      * Count search results
      */
+    /**
+     * @param array<string, mixed> $filters
+     */
     public function countSearch(array $filters): int
     {
         $qb = $this->createQueryBuilder('v');
@@ -72,6 +79,9 @@ public function findById(int $id): ?Voyage
 
     /**
      * Apply search and filter conditions to the query builder
+     */
+    /**
+     * @param array<string, mixed> $filters
      */
     private function applyFilters(QueryBuilder $qb, array $filters): void
     {
@@ -121,6 +131,9 @@ public function findById(int $id): ?Voyage
     /**
      * Apply sorting to the query builder
      */
+    /**
+     * @param array<string, mixed> $filters
+     */
     private function applySorting(QueryBuilder $qb, array $filters): void
     {
         $sortField = $filters['sort_by'] ?? 'startDate';
@@ -137,6 +150,9 @@ public function findById(int $id): ?Voyage
 
     /**
      * Apply pagination to the query builder
+     */
+    /**
+     * @param array<string, mixed> $filters
      */
     private function applyPagination(QueryBuilder $qb, array $filters): void
     {

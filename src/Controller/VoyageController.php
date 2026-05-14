@@ -264,6 +264,9 @@ class VoyageController extends AbstractController
 
     // ==================== HELPER METHODS ====================
 
+    /**
+     * @return array<string, mixed>
+     */
     private function buildSearchFilters(Request $request): array
     {
         $search = $request->query->get('search', '');
@@ -299,6 +302,9 @@ class VoyageController extends AbstractController
         return $filters;
     }
 
+    /**
+     * @param array<string, mixed> $filters
+     */
     private function hasActiveSearchFilters(array $filters): bool
     {
         return !empty($filters['title'])
@@ -310,6 +316,10 @@ class VoyageController extends AbstractController
     }
 
 
+    /**
+     * @param array<int, array<string, mixed>> $entities
+     * @return array<int, array<string, mixed>>
+     */
     private function filterByEntityId(array $entities, int $voyageId): array
     {
         return array_values(array_filter($entities, fn($e) => (int) $e['voyage_id'] === $voyageId));
