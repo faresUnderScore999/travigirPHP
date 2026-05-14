@@ -44,7 +44,7 @@ class ValidationService
     /**
      * Validate date format and range
      */
-    public function validateDate(string $date, string $fieldName = 'date', ?string $format = 'Y-m-d'): self
+    public function validateDate(string $date, string $fieldName = 'date', string $format = 'Y-m-d'): self
     {
         $d = \DateTime::createFromFormat($format, $date);
         if (!$d || $d->format($format) !== $date) {
@@ -57,7 +57,7 @@ class ValidationService
     /**
      * Validate date is not in the past
      */
-    public function validateDateNotPast(string $date, string $fieldName = 'date', ?string $format = 'Y-m-d'): self
+    public function validateDateNotPast(string $date, string $fieldName = 'date', string $format = 'Y-m-d'): self
     {
         $d = \DateTime::createFromFormat($format, $date);
         if ($d && $d < new \DateTime('today')) {
@@ -70,7 +70,7 @@ class ValidationService
     /**
      * Validate end date is after start date
      */
-    public function validateDateRange(string $startDate, string $endDate, string $startField = 'start_date', string $endField = 'end_date', ?string $format = 'Y-m-d'): self
+    public function validateDateRange(string $startDate, string $endDate, string $startField = 'start_date', string $endField = 'end_date', string $format = 'Y-m-d'): self
     {
         $start = \DateTime::createFromFormat($format, $startDate);
         $end = \DateTime::createFromFormat($format, $endDate);

@@ -19,9 +19,6 @@ class ActivityService
     }
 
     /**
-     * Create a new activity
-     */
-    /**
      * @param array<string, mixed> $data
      */
     public function createActivity(array $data): ?Activity
@@ -44,9 +41,6 @@ class ActivityService
         return $activity;
     }
 
-    /**
-     * Update an existing activity
-     */
     /**
      * @param array<string, mixed> $data
      */
@@ -108,14 +102,11 @@ class ActivityService
     }
 
     /**
-     * Get activity by ID for admin
-     */
-    /**
      * @return array<string, mixed>|null
      */
     public function getActivityByIdForAdmin(int $id): ?array
     {
-        $activity = $this->safeExecute(fn () => $this->activityRepository->find($id));
+        $activity = $this->safeExecute(fn () => $this->activityRepository->find($id), null);
 
         if ($activity === null) {
             return null;
@@ -124,9 +115,6 @@ class ActivityService
         return $this->normalizeActivity($activity, true);
     }
 
-    /**
-     * Get activities by voyage ID
-     */
     /**
      * @return array<int, array<string, mixed>>
      */
@@ -140,11 +128,6 @@ class ActivityService
         return $this->normalizeActivities($activities, false);
     }
 
-    /**
-     * Normalize activities for output
-     * @param Activity[] $activities
-     * @return array
-     */
     /**
      * @param Activity[] $activities
      * @return array<int, array<string, mixed>>

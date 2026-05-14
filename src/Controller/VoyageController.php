@@ -90,7 +90,7 @@ class VoyageController extends AbstractController
             $sessionUser = $request->getSession()->get('auth_user');
             $userId = $sessionUser['id'] ?? 0;
             $resultsFound = count($voyages);
-            $this->searchHistoryService->recordSearch($userId, $search, 'voyage', $resultsFound);
+            $this->searchHistoryService->recordSearch($userId, (string) $search, 'voyage', $resultsFound);
         }
 
         $totalPages = ceil($totalVoyages / $limit) ?: 1;

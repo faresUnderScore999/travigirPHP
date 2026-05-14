@@ -68,7 +68,7 @@ class ReservationService
             $this->entityManager->persist($reservation);
             $this->entityManager->flush();
 
-            return $this->getReservationById($reservation->getId(), $userId);
+            return $this->getReservationById((int) $reservation->getId(), $userId);
         } catch (\Throwable $e) {
             $this->logger->error('Failed to create reservation', ['error' => $e->getMessage(), 'user_id' => $userId]);
             return null;

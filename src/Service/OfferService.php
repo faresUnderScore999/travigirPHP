@@ -119,7 +119,7 @@ class OfferService
      */
     public function getOfferByIdForAdmin(int $id): ?array
     {
-        $offer = $this->safeExecute(fn () => $this->offerRepository->find($id));
+        $offer = $this->safeExecute(fn () => $this->offerRepository->find($id), null);
 
         if ($offer === null) {
             return null;
@@ -167,7 +167,7 @@ class OfferService
             if ($includePriceAndImage) {
                 $data['price'] = (float) ($voyage->getPrice() ?? 0);
                 
-                $data['image_url'] = ($this->voyageService->extractImageUrls($voyage->getId())[0] ?? null) ?? self::DEFAULT_IMAGE;
+                $data['image_url'] = ($this->voyageService->extractImageUrls((int) $voyage->getId())[0] ?? null) ?? self::DEFAULT_IMAGE;
             }
 
             $normalized[] = $data;

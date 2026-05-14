@@ -117,7 +117,7 @@ class CloudinaryService
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        if ($responseBody === false || $curlError !== '') {
+        if (!is_string($responseBody) || $curlError !== '') {
             $this->logger?->error('Cloudinary upload failed', ['error' => $curlError]);
             throw new \RuntimeException('Cloudinary request failed: ' . $curlError);
         }

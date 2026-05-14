@@ -31,11 +31,14 @@ foreach ($iterator as $file) {
     }
     
     $content = file_get_contents($file->getPathname());
+    if ($content === false) {
+        continue;
+    }
     
     // Check path() calls
     preg_match_all('/path\([\'\"]([^\'\"]+)[\'\"]/', $content, $pathMatches);
     foreach ($pathMatches[1] as $routeName) {
-        if (!$router->getRouteCollection()->get($routeName)) {
+        if (!$router->getRouteCollection()->get($routeName)) { // @phpstan-ignore method.notFound
             $errors[] = sprintf(
                 "❌ Route '%s' used in path() in %s does not exist",
                 $routeName,
@@ -47,7 +50,7 @@ foreach ($iterator as $file) {
     // Check url() calls
     preg_match_all('/url\([\'\"]([^\'\"]+)[\'\"]/', $content, $urlMatches);
     foreach ($urlMatches[1] as $routeName) {
-        if (!$router->getRouteCollection()->get($routeName)) {
+        if (!$router->getRouteCollection()->get($routeName)) { // @phpstan-ignore method.notFound
             $errors[] = sprintf(
                 "❌ Route '%s' used in url() in %s does not exist",
                 $routeName,

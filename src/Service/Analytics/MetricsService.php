@@ -3,7 +3,6 @@
 namespace App\Service\Analytics;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Exception;
 
 /**
  * Service to collect and aggregate application-wide metrics.
@@ -55,8 +54,8 @@ class MetricsService
             'start' => $startDate,
             'end'   => $endDate,
         ]);
-        $searchers = (int) $result['searchers'];
-        $viewers   = (int) $result['viewers'];
+        $searchers = (int) ($result['searchers'] ?? 0);
+        $viewers   = (int) ($result['viewers'] ?? 0);
         $rate = $searchers > 0 ? round(100 * $viewers / $searchers, 1) : 0;
         return [
             'searchers'        => $searchers,
@@ -78,7 +77,7 @@ class MetricsService
     /**
      * Top destinations based on search queries (first word).
      *
-     * @return array<int, array{destination: string, search_count: int}>
+     * @return array<int, array<string, mixed>>
      */
     public function getTopSearchedDestinations(int $limit = 5): array
     {
@@ -98,7 +97,7 @@ class MetricsService
     /**
      * Unmet demand: destinations searched but not present in voyages.
      *
-     * @return array<int, array{destination: string, search_count: int}>
+     * @return array<int, array<string, mixed>>
      */
     public function getUnmetDemandDestinations(int $limit = 5): array
     {
@@ -267,11 +266,11 @@ class MetricsService
             'end'   => $endDate,
         ]);
         return [
-            'total_reservations' => (int) $result['total_reservations'],
-            'confirmed'          => (int) $result['confirmed'],
-            'pending'            => (int) $result['pending'],
-            'cancelled'          => (int) $result['cancelled'],
-            'total_revenue'      => (float) $result['total_revenue'],
+            'total_reservations' => (int) ($result['total_reservations'] ?? 0),
+            'confirmed'          => (int) ($result['confirmed'] ?? 0),
+            'pending'            => (int) ($result['pending'] ?? 0),
+            'cancelled'          => (int) ($result['cancelled'] ?? 0),
+            'total_revenue'      => (float) ($result['total_revenue'] ?? 0),
         ];
     }
 
@@ -333,8 +332,8 @@ class MetricsService
             'start' => $startDate,
             'end'   => $endDate,
         ]);
-        $total = (int) $result['total'];
-        $paid  = (int) $result['paid'];
+        $total = (int) ($result['total'] ?? 0);
+        $paid  = (int) ($result['paid'] ?? 0);
         return $total > 0 ? round(100 * $paid / $total, 1) : 0;
     }
 
@@ -364,11 +363,11 @@ class MetricsService
             'end'   => $endDate,
         ]);
         return [
-            'total'        => (int) $result['total'],
-            'open'         => (int) $result['open'],
-            'in_progress'  => (int) $result['in_progress'],
-            'resolved'     => (int) $result['resolved'],
-            'high_priority'=> (int) $result['high_priority'],
+            'total'        => (int) ($result['total'] ?? 0),
+            'open'         => (int) ($result['open'] ?? 0),
+            'in_progress'  => (int) ($result['in_progress'] ?? 0),
+            'resolved'     => (int) ($result['resolved'] ?? 0),
+            'high_priority'=> (int) ($result['high_priority'] ?? 0),
         ];
     }
 
@@ -408,11 +407,11 @@ class MetricsService
             'end'   => $endDate,
         ]);
         return [
-            'total'                 => (int) $result['total'],
-            'pending'               => (int) $result['pending'],
-            'approved'              => (int) $result['approved'],
-            'rejected'              => (int) $result['rejected'],
-            'total_approved_amount' => (float) $result['total_approved_amount'],
+            'total'                 => (int) ($result['total'] ?? 0),
+            'pending'               => (int) ($result['pending'] ?? 0),
+            'approved'              => (int) ($result['approved'] ?? 0),
+            'rejected'              => (int) ($result['rejected'] ?? 0),
+            'total_approved_amount' => (float) ($result['total_approved_amount'] ?? 0),
         ];
     }
 
@@ -545,7 +544,8 @@ class MetricsService
     public function getFullAnalyticsSnapshot(?string $startDate = null, ?string $endDate = null): array
     {
         $endDate   = $endDate   ?? date('Y-m-d');
-        $startDate = $startDate ?? date('Y-m-d', strtotime('-30 days', strtotime($endDate)));
+        $endTs     = strtotime($endDate) ?: time();
+        $startDate = $startDate ?? date('Y-m-d', (int) strtotime('-30 days', $endTs));
 
         return [
             'period' => ['start' => $startDate, 'end' => $endDate],

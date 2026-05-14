@@ -186,6 +186,11 @@ class BookingComService
             return [];
         }
 
+        if (!is_string($body)) {
+            $this->logger->error('BookingComService empty or invalid response body for ' . $path);
+            return [];
+        }
+
         $data = json_decode($body, true);
         if (!is_array($data)) {
             $this->logger->error('BookingComService invalid JSON for ' . $path);

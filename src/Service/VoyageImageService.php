@@ -30,7 +30,7 @@ class VoyageImageService
 
         $image = new VoyageImage();
         // DO NOT set ID - let Doctrine auto-generate it
-        $image->setVoyageId($voyage->getId());
+        $image->setVoyageId((int) $voyage->getId());
         $image->setImageUrl($data['image_url'] ?? '');
         $image->setCloudinaryPublicId($data['cloudinary_public_id'] ?? '');
         $image->setCreatedAt(new \DateTime());
@@ -113,7 +113,7 @@ class VoyageImageService
      */
     public function getImageByIdForAdmin(int $id): ?array
     {
-        $image = $this->safeExecute(fn () => $this->voyageImageRepository->find($id));
+        $image = $this->safeExecute(fn () => $this->voyageImageRepository->find($id), null);
 
         if ($image === null) {
             return null;
@@ -141,7 +141,7 @@ class VoyageImageService
 
     /**
      * @param VoyageImage[] $images
-     * @param array<int, object> $preloadedVoyages
+     * @param array<int|string, object> $preloadedVoyages
      * @return array<int, array<string, mixed>>
      */
     private function normalizeImages(array $images, bool $includeVoyageInfo, array $preloadedVoyages = []): array
@@ -154,7 +154,7 @@ class VoyageImageService
     }
 
     /**
-     * @param array<int, object> $preloadedVoyages
+     * @param array<int|string, object> $preloadedVoyages
      * @return array<string, mixed>
      */
     private function normalizeImage(VoyageImage $image, bool $includeVoyageInfo, array $preloadedVoyages = []): array

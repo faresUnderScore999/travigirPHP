@@ -148,7 +148,7 @@ class UserLoginRepository extends ServiceEntityRepository
 
     public function countAllLogins(): int
     {
-        return $this->createQueryBuilder('ul')
+        return (int) $this->createQueryBuilder('ul')
             ->select('count(ul.id)')
             ->getQuery()
             ->getSingleScalarResult();

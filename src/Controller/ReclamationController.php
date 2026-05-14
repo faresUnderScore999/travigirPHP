@@ -80,7 +80,7 @@ class ReclamationController extends AbstractController
             return $resp;
         }
         $userId = $this->getAuthenticatedUserId($request);
-        $reclamations = $this->reclamationService->getReclamationsByUser($userId);
+        $reclamations = $this->reclamationService->getReclamationsByUser((int) $userId);
         return $this->render('reclamation/list.html.twig', [
             'reclamations' => $reclamations,
         ]);
@@ -107,7 +107,7 @@ class ReclamationController extends AbstractController
             // Verify the reservation belongs to the user (if provided)
             $reservationId = $data['reservation_id'] ?? null;
             if ($reservationId !== null) {
-                $reservation = $this->reservationService->getReservationById((int) $reservationId, $userId);
+                $reservation = $this->reservationService->getReservationById((int) $reservationId, (int) $userId);
                 if ($reservation === null) {
                     $error = ['reservation_id' => ['You can only file a reclamation for a reservation you own.']];
                 }
@@ -162,9 +162,9 @@ class ReclamationController extends AbstractController
         // Get parameters from URL
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
-        $email = $request->query->get('email'); // Filter by email
+        $email = (string) $request->query->get('email', ''); // Filter by email
 
-        $pagination = $this->reclamationService->getPaginatedReclamations($page, $limit, $email);
+        $pagination = $this->reclamationService->getPaginatedReclamations($page, $limit, $email ?: null);
 
         return $this->render('admin/reclamations/list.html.twig', [
             'reclamations' => $pagination['data'],
@@ -209,7 +209,7 @@ public function adminDetail(Request $request, int $id): Response
         if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
             return $adminResp;
         }
-        $response = $request->request->get('response', '');
+        $response = (string) $request->request->get('response', '');
         $this->reclamationService->addResponse($id, $response);
         $this->addFlash('success', 'Response added.');
         return $this->redirectToRoute('admin_reclamation_detail', ['id' => $id]);
@@ -221,7 +221,7 @@ public function adminDetail(Request $request, int $id): Response
         if ($adminResp = $this->adminController->ensureIsAdmin($request)) {
             return $adminResp;
         }
-        $status = $request->request->get('status', 'OPEN');
+        $status = (string) $request->request->get('status', 'OPEN');
         $this->reclamationService->updateStatus($id, $status);
         $this->addFlash('success', 'Status updated.');
         return $this->redirectToRoute('admin_reclamation_detail', ['id' => $id]);

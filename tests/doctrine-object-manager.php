@@ -11,4 +11,9 @@ if (file_exists(dirname(__DIR__) . '/.env')) {
 $kernel = new App\Kernel($_SERVER['APP_ENV'] ?? 'dev', (bool) ($_SERVER['APP_DEBUG'] ?? true));
 $kernel->boot();
 
-return $kernel->getContainer()->get('doctrine')->getManager();
+$doctrine = $kernel->getContainer()->get('doctrine');
+if (!$doctrine instanceof \Doctrine\Persistence\ManagerRegistry) {
+    throw new \RuntimeException('Doctrine ManagerRegistry not found in container.');
+}
+
+return $doctrine->getManager();

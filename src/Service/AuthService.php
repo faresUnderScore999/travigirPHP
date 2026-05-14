@@ -64,7 +64,7 @@ class AuthService
                 'id' => $user->getId(),
                 'username' => $user->getUsername(),
                 'email' => $user->getEmail(),
-                'is_admin' => $this->isAdmin($user->getId()),
+                'is_admin' => $this->isAdmin((int) $user->getId()),
             ];
         }
 
@@ -175,7 +175,7 @@ class AuthService
             'tel' => $user->getTel(),
             'image_url' => $user->getImageUrl(),
             'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
-            'is_admin' => $this->isAdmin($user->getId()),
+            'is_admin' => $this->isAdmin((int) $user->getId()),
         ];
     }
 
@@ -200,7 +200,7 @@ class AuthService
             'tel' => $user->getTel(),
             'image_url' => $user->getImageUrl(),
             'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
-            'is_admin' => $this->isAdmin($user->getId()),
+            'is_admin' => $this->isAdmin((int) $user->getId()),
         ];
     }
 
