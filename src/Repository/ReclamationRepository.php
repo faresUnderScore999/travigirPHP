@@ -74,7 +74,10 @@ class ReclamationRepository extends ServiceEntityRepository
     }
 // src/Repository/ReclamationRepository.php
 
-public function findPaginated(int $page, int $limit, ?int $userId = null): array
+    /**
+     * @return array<int, Reclamation>
+     */
+    public function findPaginated(int $page, int $limit, ?int $userId = null): array
 {
     $qb = $this->createQueryBuilder('r')
         ->orderBy('r.priority', 'DESC')
@@ -94,18 +97,10 @@ public function findPaginated(int $page, int $limit, ?int $userId = null): array
         ->getSingleScalarResult();
 
     // Fetch the data slice
-    $results = $qb->setFirstResult(($page - 1) * $limit)
+    return $qb->setFirstResult(($page - 1) * $limit)
         ->setMaxResults($limit)
         ->getQuery()
         ->getResult();
-
-    return [
-        'data' => $results,
-        'totalItems' => $totalItems,
-        'totalPages' => $totalItems > 0 ? (int) ceil($totalItems / $limit) : 1,
-        'currentPage' => $page,
-        'limit' => $limit
-    ];
 }
     /**
      * Find urgent reclamations

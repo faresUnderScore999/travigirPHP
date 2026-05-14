@@ -119,6 +119,9 @@ class VoyageVisitRepository extends ServiceEntityRepository
      * Find most visited voyages
      * @return array
      */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function findMostVisitedVoyages(int $limit = 10): array
     {
         return $this->createQueryBuilder('vv')
@@ -184,32 +187,36 @@ class VoyageVisitRepository extends ServiceEntityRepository
 /**
  * Find most visited voyages with their titles
  */
-public function findMostVisitedVoyagesWithNames(int $limit = 10): array
-{
-    return $this->createQueryBuilder('vv')
-        // Use v.title (from Voyage entity) instead of titre
-        ->select('v.title as voyageName, vv.voyageId, COUNT(vv.id) as visitCount')
-        ->join('App\Entity\Voyage', 'v', 'WITH', 'vv.voyageId = v.id')
-        ->groupBy('vv.voyageId, v.title')
-        ->orderBy('visitCount', 'DESC')
-        ->setMaxResults($limit)
-        ->getQuery()
-        ->getResult();
-}
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function findMostVisitedVoyagesWithNames(int $limit = 10): array
+    {
+        return $this->createQueryBuilder('vv')
+            // Use v.title (from Voyage entity) instead of titre
+            ->select('v.title as voyageName, vv.voyageId, COUNT(vv.id) as visitCount')
+            ->join('App\\Entity\\Voyage', 'v', 'WITH', 'vv.voyageId = v.id')
+            ->groupBy('vv.voyageId, v.title')
+            ->orderBy('visitCount', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 
-/**
- * Get paginated visits with voyage titles
- */
-public function findPaginatedWithNames(int $offset, int $limit): array
-{
-    return $this->createQueryBuilder('vv')
-        // This selects the VoyageVisit object (index 0) and the title string
-        ->select('vv', 'v.title as voyageName')
-        ->join('App\Entity\Voyage', 'v', 'WITH', 'vv.voyageId = v.id')
-        ->orderBy('vv.visitTime', 'DESC')
-        ->setFirstResult($offset)
-        ->setMaxResults($limit)
-        ->getQuery()
-        ->getResult();
-}
+    /**
+     * Get paginated visits with voyage titles
+     * @return array<int, array<string, mixed>>
+     */
+    public function findPaginatedWithNames(int $offset, int $limit): array
+    {
+        return $this->createQueryBuilder('vv')
+            // This selects the VoyageVisit object (index 0) and the title string
+            ->select('vv', 'v.title as voyageName')
+            ->join('App\\Entity\\Voyage', 'v', 'WITH', 'vv.voyageId = v.id')
+            ->orderBy('vv.visitTime', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }

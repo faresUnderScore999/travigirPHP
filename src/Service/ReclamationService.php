@@ -19,7 +19,7 @@ class ReclamationService
     }
 
     /**
-     * Create a new reclamation
+     * @param array<string, mixed> $data
      */
     public function createReclamation(array $data): Reclamation
     {
@@ -78,25 +78,47 @@ class ReclamationService
         $this->entityManager->flush();
         return $reclamation;
     }
-public function getPaginatedReclamations(int $page, int $limit, ?string $email = null): array
+    /**
+     * @return array{data: array<int, \App\Entity\Reclamation>, totalItems: int, totalPages: int, currentPage: int, limit: int}
+     */
+    public function getPaginatedReclamations(int $page, int $limit, ?string $email = null): array
 {
     return $this->safeExecute(function() use ($page, $limit, $email) {
         $userId = null;
         
         // If an email is provided, try to find the user ID
         if ($email) {
-            $user = $this->authService->getUserByEmail($email); // Assuming this exists
-            $userId = $user ? $user['id'] : -1; // -1 ensures no results if user not found
+            $user = $this->authService->getUserByEmail($email);
+            $userId = $user ? $user['id'] : -1;
         }
 
-        return $this->reclamationRepository->findPaginated($page, $limit, $userId);
+        $result = $this->reclamationRepository->findPaginated($page, $limit, $userId);
+        
+        // Count total items
+        $countQb = $this->reclamationRepository->createQueryBuilder('r');
+        if ($userId !== null) {
+            $countQb->andWhere('r.userId = :userId')
+               ->setParameter('userId', $userId);
+        }
+        $totalItems = (int) $countQb->select('COUNT(r.id)')
+            ->resetDQLPart('orderBy')
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        return [
+            'data' => $result,
+            'totalItems' => $totalItems,
+            'totalPages' => (int) ceil($totalItems / $limit),
+            'currentPage' => $page,
+            'limit' => $limit,
+        ];
     }, [
         'data' => [], 'totalItems' => 0, 'totalPages' => 0, 
         'currentPage' => $page, 'limit' => $limit
     ]);
 }
     /**
-     * Get all open reclamations
+     * @return Reclamation[]
      */
     public function getOpenReclamations(): array
     {
@@ -104,7 +126,7 @@ public function getPaginatedReclamations(int $page, int $limit, ?string $email =
     }
 
     /**
-     * Get urgent reclamations
+     * @return Reclamation[]
      */
     public function getUrgentReclamations(): array
     {
@@ -112,7 +134,7 @@ public function getPaginatedReclamations(int $page, int $limit, ?string $email =
     }
 
     /**
-     * Get reclamations by user
+     * @return Reclamation[]
      */
     public function getReclamationsByUser(int $userId): array
     {

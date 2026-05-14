@@ -50,12 +50,16 @@ class VoyageVisitService
     }
 
     /**
-     * Get visits for a voyage
+     * @return VoyageVisit[]
      */
     public function getVisitsByVoyage(int $voyageId): array
     {
         return $this->safeExecute(fn() => $this->voyageVisitRepository->findByVoyageId($voyageId), []);
     }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function getPaginatedVisits(int $page = 1, int $limit = 50): array
     {
         $offset = ($page - 1) * $limit;
@@ -72,8 +76,9 @@ class VoyageVisitService
             ];
         }, ['data' => [], 'totalItems' => 0, 'currentPage' => 1, 'totalPages' => 1]);
     }
+
     /**
-     * Get user's visited voyages
+     * @return VoyageVisit[]
      */
     public function getUserVisits(int $userId): array
     {
@@ -81,7 +86,7 @@ class VoyageVisitService
     }
 
     /**
-     * Get most visited voyages
+     * @return array<int, array<string, mixed>>
      */
     public function getMostVisitedVoyages(int $limit = 10): array
     {

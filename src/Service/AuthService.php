@@ -17,6 +17,9 @@ class AuthService
     ) {
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function authenticate(string $email, string $plainPassword): ?array
     {
         $email = strtolower(trim($email));
@@ -61,7 +64,7 @@ class AuthService
                 'id' => $user->getId(),
                 'username' => $user->getUsername(),
                 'email' => $user->getEmail(),
-                'is_admin' => $this->isAdmin($user->getId()),
+                'is_admin' => $this->isAdmin((int) $user->getId()),
             ];
         }
 
@@ -118,6 +121,9 @@ class AuthService
     // Fallback authentication is disabled for security; use persistent users only.
 
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function register(string $username, string $email, string $plainPassword): ?array
     {
         $email = strtolower(trim($email));
@@ -152,6 +158,9 @@ class AuthService
         }
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getUserById(int $userId): ?array
     {
         $user = $this->userRepository->find($userId);
@@ -166,35 +175,40 @@ class AuthService
             'tel' => $user->getTel(),
             'image_url' => $user->getImageUrl(),
             'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
-            'is_admin' => $this->isAdmin($user->getId()),
+            'is_admin' => $this->isAdmin((int) $user->getId()),
         ];
     }
-public function getUserByEmail(string $email): ?array
-{
-    // 1. Ask the repository to find the user entity by email
-    $user = $this->userRepository->findOneBy(['email' => $email]);
 
-    // 2. If no user found, return null
-    if (!$user) {
-        return null;
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getUserByEmail(string $email): ?array
+    {
+        // 1. Ask the repository to find the user entity by email
+        $user = $this->userRepository->findOneBy(['email' => $email]);
+
+        // 2. If no user found, return null
+        if (!$user) {
+            return null;
+        }
+
+        // 3. Return the user data in the same format as getUserById
+        return [
+            'id' => $user->getId(),
+            'username' => $user->getUsername(),
+            'email' => $user->getEmail(),
+            'tel' => $user->getTel(),
+            'image_url' => $user->getImageUrl(),
+            'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
+            'is_admin' => $this->isAdmin((int) $user->getId()),
+        ];
     }
 
-    // 3. Return the user data in the same format as getUserById
-    return [
-        'id' => $user->getId(),
-        'username' => $user->getUsername(),
-        'email' => $user->getEmail(),
-        'tel' => $user->getTel(),
-        'image_url' => $user->getImageUrl(),
-        'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
-        'is_admin' => $this->isAdmin($user->getId()),
-    ];
-}
- public function isAdmin(int $userId): bool
-{
-    $admin = $this->adminRepository->findByUserId($userId);
-    return $admin !== null;
-}
+    public function isAdmin(int $userId): bool
+    {
+        $admin = $this->adminRepository->findByUserId($userId);
+        return $admin !== null;
+    }
 
     public function checkPasswordForUser(int $userId, string $plainPassword): bool
     {
@@ -206,6 +220,9 @@ public function getUserByEmail(string $email): ?array
         return $this->isPasswordValid($plainPassword, $user->getPassword());
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function updateProfile(int $userId, string $username, string $email, ?string $tel = null, ?string $imageUrl = null, ?string $newPassword = null, ?string $currentPassword = null): ?array
     {
         $username = trim($username);
@@ -239,9 +256,9 @@ public function getUserByEmail(string $email): ?array
         $user->setTel($tel);
         $user->setImageUrl($imageUrl);
 
-    if ($newPassword !== null && $newPassword !== '') {
-        $user->setPassword($newPassword); // setPassword() now hashes automatically
-    }
+        if ($newPassword !== null && $newPassword !== '') {
+            $user->setPassword($newPassword); // setPassword() now hashes automatically
+        }
 
         try {
             $this->entityManager->flush();
@@ -259,6 +276,9 @@ public function getUserByEmail(string $email): ?array
         }
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function listUsers(): array
     {
         $users = $this->userRepository->findAll();
@@ -292,58 +312,56 @@ public function getUserByEmail(string $email): ?array
         }
     }
 
-    // src/Service/AuthService.php
-
-// Add this method (or modify existing listUsers to be deprecated)
-// src/Service/AuthService.php
-
-public function getPaginatedUsers(int $page, int $limit, array $filters): array
-{
-    $offset = ($page - 1) * $limit;
-    $filters = array_merge([
-        'search' => '',
-        'sort_by' => 'createdAt',
-        'sort_order' => 'DESC',
-    ], $filters);
-    
-    // Remove 'role' from filters if present
-    unset($filters['role']);
-    
-    $result = $this->userRepository->searchPaginated($filters, $limit, $offset);
-    $users = $result['users'];
-    $total = $result['total'];
-    
-    // Map users to array with is_admin flag (still optional for display)
-    $mappedUsers = array_map(function ($user) {
-        $roles = $user->getRoles();
-        $isAdmin = in_array('ROLE_ADMIN', $roles, true);
+    /**
+     * @param array<string, mixed> $filters
+     * @return array{users: array<int, array<string, mixed>>, total: int}
+     */
+    public function getPaginatedUsers(int $page, int $limit, array $filters): array
+    {
+        $offset = ($page - 1) * $limit;
+        $filters = array_merge([
+            'search' => '',
+            'sort_by' => 'createdAt',
+            'sort_order' => 'DESC',
+        ], $filters);
+        
+        // Remove 'role' from filters if present
+        unset($filters['role']);
+        
+        $result = $this->userRepository->searchPaginated($filters, $limit, $offset);
+        $users = $result['users'];
+        $total = $result['total'];
+        
+        // Map users to array with is_admin flag (still optional for display)
+        $mappedUsers = array_map(function ($user) {
+            $roles = $user->getRoles();
+            $isAdmin = in_array('ROLE_ADMIN', $roles, true);
+            
+            return [
+                'id' => $user->getId(),
+                'username' => $user->getUsername(),
+                'email' => $user->getEmail(),
+                'tel' => $user->getTel(),
+                'image_url' => $user->getImageUrl(),
+                'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
+                'is_admin' => $isAdmin,
+                'roles' => $roles,
+            ];
+        }, $users);
         
         return [
-            'id' => $user->getId(),
-            'username' => $user->getUsername(),
-            'email' => $user->getEmail(),
-            'tel' => $user->getTel(),
-            'image_url' => $user->getImageUrl(),
-            'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
-            'is_admin' => $isAdmin,
-            'roles' => $roles,
+            'users' => $mappedUsers,
+            'total' => $total,
         ];
-    }, $users);
-    
-    // No stats returned – we'll handle totals in template differently
-    return [
-        'users' => $mappedUsers,
-        'total' => $total,
-    ];
-}
+    }
 
-// Remove getUserStats() entirely, or keep it simple without JSON queries:
-public function getUserStats(): array
-{
-    // Return zeros or remove usage
-    return ['total' => 0, 'admins' => 0, 'regular' => 0];
-}
+    /**
+     * @return array{total: int, admins: int, regular: int}
+     */
+    public function getUserStats(): array
+    {
+        return ['total' => 0, 'admins' => 0, 'regular' => 0];
+    }
 
 
 }
-

@@ -177,16 +177,18 @@ public function reserveVoyage(Request $request, int $id): Response
             $reservation = $this->reservationService->getReservationByIdAdmin($id);
         } else {
             $reservation = $this->reservationService->getReservationById($id, $user['id']);
+        }
+
+        if (!$reservation) {
+            throw $this->createNotFoundException('Reservation not found');
+        }
+
+        if (!$isAdmin) {
             $voyage = $this->voyageService->getVoyageById($reservation['voyage_id']);
             $reservation['voyage_title'] = $voyage ? $voyage['title'] : 'Unknown Voyage';
             $reservation['destination'] = $voyage ? $voyage['destination'] : 'Unknown Destination';
             $reservation['voyage_start'] = $voyage ? $voyage['start_date'] : null;
             $reservation['voyage_end'] = $voyage ? $voyage['end_date'] : null;
-
-        }
-
-        if (!$reservation) {
-            throw $this->createNotFoundException('Reservation not found');
         }
 
         $error = null;

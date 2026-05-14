@@ -24,7 +24,7 @@ class OfferService
     }
 
     /**
-     * Create a new offer
+     * @param array<string, mixed> $data
      */
     public function createOffer(array $data): ?Offer
     {
@@ -49,7 +49,7 @@ class OfferService
     }
 
     /**
-     * Update an existing offer
+     * @param array<string, mixed> $data
      */
     public function updateOffer(int $id, array $data): ?Offer
     {
@@ -105,7 +105,7 @@ class OfferService
     }
 
     /**
-     * Get all offers for admin
+     * @return array<int, array<string, mixed>>
      */
     public function getAllOffersForAdmin(): array
     {
@@ -115,11 +115,11 @@ class OfferService
     }
 
     /**
-     * Get offer by ID for admin
+     * @return array<string, mixed>|null
      */
     public function getOfferByIdForAdmin(int $id): ?array
     {
-        $offer = $this->safeExecute(fn () => $this->offerRepository->find($id));
+        $offer = $this->safeExecute(fn () => $this->offerRepository->find($id), null);
 
         if ($offer === null) {
             return null;
@@ -128,6 +128,9 @@ class OfferService
         return $this->normalizeOffer($offer, false);
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getActiveOffers(): array
     {
         $offers = $this->safeExecute(fn () => $this->offerRepository->findActiveOffers(), []);
@@ -136,9 +139,8 @@ class OfferService
     }
 
     /**
-     * Normalize offers for output
      * @param Offer[] $offers
-     * @return array
+     * @return array<int, array<string, mixed>>
      */
     private function normalizeOffers(array $offers, bool $includePriceAndImage): array
     {
@@ -165,7 +167,7 @@ class OfferService
             if ($includePriceAndImage) {
                 $data['price'] = (float) ($voyage->getPrice() ?? 0);
                 
-                $data['image_url'] = ($this->voyageService->extractImageUrls($voyage->getId())[0] ?? null) ?? self::DEFAULT_IMAGE;
+                $data['image_url'] = ($this->voyageService->extractImageUrls((int) $voyage->getId())[0] ?? null) ?? self::DEFAULT_IMAGE;
             }
 
             $normalized[] = $data;
@@ -175,7 +177,7 @@ class OfferService
     }
 
     /**
-     * Normalize a single offer for output
+     * @return array<string, mixed>
      */
     private function normalizeOffer(Offer $offer, bool $includePriceAndImage): array
     {

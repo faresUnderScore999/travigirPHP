@@ -19,6 +19,9 @@ class UserDocumentRepository extends ServiceEntityRepository
     /**
      * Find document by user ID
      */
+    /**
+     * @return array<int, UserDocument>
+     */
     public function findByUserId(int $userId): array
     {
         return $this->createQueryBuilder('ud')

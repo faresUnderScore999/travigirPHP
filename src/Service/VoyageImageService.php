@@ -19,31 +19,31 @@ class VoyageImageService
     }
 
     /**
-     * Create a new voyage image
+     * @param array<string, mixed> $data
      */
-public function createVoyageImage(array $data): ?VoyageImage
-{
-    $voyage = $this->voyageRepository->find($data['voyage_id'] ?? 0);
-    if (!$voyage) {
-        return null;
+    public function createVoyageImage(array $data): ?VoyageImage
+    {
+        $voyage = $this->voyageRepository->find($data['voyage_id'] ?? 0);
+        if (!$voyage) {
+            return null;
+        }
+
+        $image = new VoyageImage();
+        // DO NOT set ID - let Doctrine auto-generate it
+        $image->setVoyageId((int) $voyage->getId());
+        $image->setImageUrl($data['image_url'] ?? '');
+        $image->setCloudinaryPublicId($data['cloudinary_public_id'] ?? '');
+        $image->setCreatedAt(new \DateTime());
+        $image->setUpdatedAt(new \DateTime());
+
+        $this->entityManager->persist($image);
+        $this->entityManager->flush();
+
+        return $image;
     }
 
-    $image = new VoyageImage();
-    // DO NOT set ID - let Doctrine auto-generate it
-    $image->setVoyageId($voyage->getId());
-    $image->setImageUrl($data['image_url'] ?? '');
-    $image->setCloudinaryPublicId($data['cloudinary_public_id'] ?? '');
-    $image->setCreatedAt(new \DateTime());
-    $image->setUpdatedAt(new \DateTime());
-
-    $this->entityManager->persist($image);
-    $this->entityManager->flush();
-
-    return $image;
-}
-
     /**
-     * Update an existing voyage image
+     * @param array<string, mixed> $data
      */
     public function updateVoyageImage(int $id, array $data): ?VoyageImage
     {
@@ -86,7 +86,7 @@ public function createVoyageImage(array $data): ?VoyageImage
     }
 
     /**
-     * Get all images for admin
+     * @return array<int, array<string, mixed>>
      */
     public function getAllImagesForAdmin(): array
     {
@@ -109,11 +109,11 @@ public function createVoyageImage(array $data): ?VoyageImage
     }
 
     /**
-     * Get image by ID for admin
+     * @return array<string, mixed>|null
      */
     public function getImageByIdForAdmin(int $id): ?array
     {
-        $image = $this->safeExecute(fn () => $this->voyageImageRepository->find($id));
+        $image = $this->safeExecute(fn () => $this->voyageImageRepository->find($id), null);
 
         if ($image === null) {
             return null;
@@ -123,7 +123,7 @@ public function createVoyageImage(array $data): ?VoyageImage
     }
 
     /**
-     * Get images by voyage ID
+     * @return array<int, array<string, mixed>>
      */
     public function getImagesByVoyageId(int $voyageId): array
     {
@@ -140,10 +140,9 @@ public function createVoyageImage(array $data): ?VoyageImage
     }
 
     /**
-     * Normalize images for output
      * @param VoyageImage[] $images
-     * @param array<int, object> $preloadedVoyages  pre-fetched voyage map (id => Voyage)
-     * @return array
+     * @param array<int|string, object> $preloadedVoyages
+     * @return array<int, array<string, mixed>>
      */
     private function normalizeImages(array $images, bool $includeVoyageInfo, array $preloadedVoyages = []): array
     {
@@ -155,8 +154,8 @@ public function createVoyageImage(array $data): ?VoyageImage
     }
 
     /**
-     * Normalize a single image for output
-     * @param array<int, object> $preloadedVoyages
+     * @param array<int|string, object> $preloadedVoyages
+     * @return array<string, mixed>
      */
     private function normalizeImage(VoyageImage $image, bool $includeVoyageInfo, array $preloadedVoyages = []): array
     {

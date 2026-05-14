@@ -19,7 +19,7 @@ class ActivityService
     }
 
     /**
-     * Create a new activity
+     * @param array<string, mixed> $data
      */
     public function createActivity(array $data): ?Activity
     {
@@ -42,7 +42,7 @@ class ActivityService
     }
 
     /**
-     * Update an existing activity
+     * @param array<string, mixed> $data
      */
     public function updateActivity(int $id, array $data): ?Activity
     {
@@ -92,7 +92,7 @@ class ActivityService
     }
 
     /**
-     * Get all activities for admin
+     * @return array<int, array<string, mixed>>
      */
     public function getAllActivitiesForAdmin(): array
     {
@@ -102,11 +102,11 @@ class ActivityService
     }
 
     /**
-     * Get activity by ID for admin
+     * @return array<string, mixed>|null
      */
     public function getActivityByIdForAdmin(int $id): ?array
     {
-        $activity = $this->safeExecute(fn () => $this->activityRepository->find($id));
+        $activity = $this->safeExecute(fn () => $this->activityRepository->find($id), null);
 
         if ($activity === null) {
             return null;
@@ -116,7 +116,7 @@ class ActivityService
     }
 
     /**
-     * Get activities by voyage ID
+     * @return array<int, array<string, mixed>>
      */
     public function getActivitiesByVoyageId(int $voyageId): array
     {
@@ -129,9 +129,8 @@ class ActivityService
     }
 
     /**
-     * Normalize activities for output
      * @param Activity[] $activities
-     * @return array
+     * @return array<int, array<string, mixed>>
      */
     private function normalizeActivities(array $activities, bool $includeVoyageInfo): array
     {
@@ -143,7 +142,7 @@ class ActivityService
     }
 
     /**
-     * Normalize a single activity for output
+     * @return array<string, mixed>
      */
     private function normalizeActivity(Activity $activity, bool $includeVoyageInfo): array
     {

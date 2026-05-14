@@ -12,8 +12,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 #[Route('/api/ai')]
 class AIAnalyticsController extends AbstractController
 {
+     /**
+      * Define available tools (functions) for the AI.
+      */
     /**
-     * Define available tools (functions) for the AI.
+     * @var array<int, array<string, mixed>>
      */
     private array $tools = [
         [
@@ -394,7 +397,10 @@ PROMPT;
     /**
      * Convert raw analytics data into a human‑readable summary for admin users.
      */
-    private function formatAnalyticsResult(string $toolName, array|string|float|int|null $result): string
+    /**
+     * Convert raw analytics data into a human‑readable summary for admin users.
+     */
+    private function formatAnalyticsResult(string $toolName, mixed $result): string
     {
         if (is_null($result)) {
             return 'No data available';
@@ -404,59 +410,80 @@ PROMPT;
             return $result;
         }
 
-        return match ($toolName) {
-            'get_full_analytics_snapshot' => $this->formatSnapshotSummary($result),
-            'get_event_type_distribution' => "Event counts: " . json_encode($result),
-            'get_search_to_view_conversion_rate' => sprintf(
-                "Conversion rate: %.1f%% (%d searchers → %d viewers)",
-                $result['conversion_rate'] ?? 0,
-                $result['searchers'] ?? 0,
-                $result['viewers'] ?? 0
-            ),
-            'get_top_voyages_by_visits' => "Top voyages: " . implode(', ', array_column($result, 'title')),
-            'get_user_growth_stats' => sprintf(
-                "Total users: %d, new in period: %d (growth %.1f%%)",
-                $result['total_users'] ?? 0,
-                $result['new_users'] ?? 0,
-                $result['growth_rate'] ?? 0
-            ),
-            'get_reservation_summary' => sprintf(
-                "Reservations: %d total, %d confirmed, %d pending, %d cancelled. Revenue: %.2f",
-                $result['total_reservations'] ?? 0,
-                $result['confirmed'] ?? 0,
-                $result['pending'] ?? 0,
-                $result['cancelled'] ?? 0,
-                $result['total_revenue'] ?? 0
-            ),
-            'get_payment_success_rate' => "Payment success rate: {$result}%",
-            'get_reclamation_summary' => sprintf(
-                "Reclamations: %d open, %d in progress, %d resolved, %d high priority",
-                $result['open'] ?? 0,
-                $result['in_progress'] ?? 0,
-                $result['resolved'] ?? 0,
-                $result['high_priority'] ?? 0
-            ),
-            'get_refund_request_summary' => sprintf(
-                "Refunds: %d pending, %d approved (total %.2f), %d rejected",
-                $result['pending'] ?? 0,
-                $result['approved'] ?? 0,
-                $result['total_approved_amount'] ?? 0,
-                $result['rejected'] ?? 0
-            ),
-            'get_unmet_demand_destinations' => "Unmet demand: " . implode(', ', array_column($result, 'destination')),
-            default => json_encode($result),
-        };
+        if (is_array($result)) {
+            return match ($toolName) {
+                'get_full_analytics_snapshot' => $this->formatSnapshotSummary($result),
+                'get_event_type_distribution' => "Event counts: " . (json_encode($result) ?: '[]'),
+                'get_search_to_view_conversion_rate' => sprintf(
+                    "Conversion rate: %.1f%% (%d searchers → %d viewers)",
+                    $result['conversion_rate'] ?? 0,
+                    $result['searchers'] ?? 0,
+                    $result['viewers'] ?? 0
+                ),
+                'get_top_voyages_by_visits' => "Top voyages: " . implode(', ', array_column($result, 'title')),
+                'get_user_growth_stats' => sprintf(
+                    "Total users: %d, new in period: %d (growth %.1f%%)",
+                    $result['total_users'] ?? 0,
+                    $result['new_users'] ?? 0,
+                    $result['growth_rate'] ?? 0
+                ),
+                'get_reservation_summary' => sprintf(
+                    "Reservations: %d total, %d confirmed, %d pending, %d cancelled. Revenue: %.2f",
+                    $result['total_reservations'] ?? 0,
+                    $result['confirmed'] ?? 0,
+                    $result['pending'] ?? 0,
+                    $result['cancelled'] ?? 0,
+                    $result['total_revenue'] ?? 0
+                ),
+                'get_reclamation_summary' => sprintf(
+                    "Reclamations: %d open, %d in progress, %d resolved, %d high priority",
+                    $result['open'] ?? 0,
+                    $result['in_progress'] ?? 0,
+                    $result['resolved'] ?? 0,
+                    $result['high_priority'] ?? 0
+                ),
+                'get_refund_request_summary' => sprintf(
+                    "Refunds: %d pending, %d approved (total %.2f), %d rejected",
+                    $result['pending'] ?? 0,
+                    $result['approved'] ?? 0,
+                    $result['total_approved_amount'] ?? 0,
+                    $result['rejected'] ?? 0
+                ),
+                'get_unmet_demand_destinations' => "Unmet demand: " . implode(', ', array_column($result, 'destination')),
+                default => json_encode($result) ?: '[]',
+            };
+        }
+
+        if (is_scalar($result)) {
+            if ($toolName === 'get_payment_success_rate') {
+                return "Payment success rate: {$result}%";
+            }
+            return (string)$result;
+        }
+
+        return 'Unsupported result type';
     }
 
+    /**
+     * @param array<string, mixed> $snapshot
+     */
     private function formatSnapshotSummary(array $snapshot): string
     {
         $lines = [];
         $lines[] = "📊 360° Analytics Snapshot";
-        $lines[] = "Period: {$snapshot['period']['start']} → {$snapshot['period']['end']}";
+        
+        $period = $snapshot['period'] ?? [];
+        $start = $period['start'] ?? 'N/A';
+        $end = $period['end'] ?? 'N/A';
+        $lines[] = "Period: {$start} → {$end}";
 
         $conv = $snapshot['search_to_view_conversion'] ?? [];
-        $lines[] = "🔍 Search→View conversion: {$conv['conversion_rate']}% ({$conv['viewers']} viewers / {$conv['searchers']} searchers)";
+        $convRate = $conv['conversion_rate'] ?? 0;
+        $viewers = $conv['viewers'] ?? 0;
+        $searchers = $conv['searchers'] ?? 0;
+        $lines[] = "🔍 Search→View conversion: {$convRate}% ({$viewers} viewers / {$searchers} searchers)";
 
+        /** @var array<int, array<string, mixed>> $topVoyages */
         $topVoyages = $snapshot['top_voyages_by_visits'] ?? [];
         if ($topVoyages) {
             $topNames = array_column(array_slice($topVoyages, 0, 3), 'title');
@@ -464,13 +491,19 @@ PROMPT;
         }
 
         $users = $snapshot['user_growth'] ?? [];
-        $lines[] = "👥 Users: {$users['total_users']} total, +{$users['new_users']} new ({$users['growth_rate']}% growth)";
+        $totalUsers = $users['total_users'] ?? 0;
+        $newUsers = $users['new_users'] ?? 0;
+        $growthRate = $users['growth_rate'] ?? 0;
+        $lines[] = "👥 Users: {$totalUsers} total, +{$newUsers} new ({$growthRate}% growth)";
 
         $res = $snapshot['reservation_summary'] ?? [];
-        $lines[] = "💰 Reservations: {$res['confirmed']} confirmed, revenue {$res['total_revenue']}";
+        $confirmed = $res['confirmed'] ?? 0;
+        $revenue = $res['total_revenue'] ?? 0;
+        $lines[] = "💰 Reservations: {$confirmed} confirmed, revenue {$revenue}";
 
         $recl = $snapshot['reclamation_summary'] ?? [];
-        $lines[] = "⚠️ Open reclamations: {$recl['open']}";
+        $open = $recl['open'] ?? 0;
+        $lines[] = "⚠️ Open reclamations: {$open}";
 
         return implode("\n", $lines);
     }
@@ -478,6 +511,9 @@ PROMPT;
     /**
      * If the AI's content looks like a tool call JSON, parse it and return an array
      * that mimics the standard tool_calls structure.
+     */
+    /**
+     * @return array<int, mixed>|null
      */
     private function extractToolCallFromContent(string $content): ?array
     {

@@ -62,6 +62,9 @@ class VoyageImageRepository extends ServiceEntityRepository
     /**
      * Get default images when no voyage images are found
      */
+/**
+ * @return array<int, VoyageImage>
+ */
 private function getDefaultImages(): array
 {
     $defaultImage = new VoyageImage();

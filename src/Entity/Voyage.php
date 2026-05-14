@@ -132,11 +132,17 @@ class Voyage
         return $this;
     }
 
+    /**
+     * @return array<int, string>|null
+     */
     public function getImageUrl(): ?array
     {
       return null;
     }
 
+    /**
+     * @param array<int, string>|null $imageUrl
+     */
     public function setImageUrl(?array $imageUrl): self
     {
      

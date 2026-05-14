@@ -72,8 +72,8 @@ class AdminRefundController extends AbstractController
 
         if ($request->isMethod('POST')) {
             $status = $request->request->get('status');
-            if ($status) {
-                $refundRequest->setStatus($status);
+            if ($status !== null && $status !== '') {
+                $refundRequest->setStatus((string) $status);
                 $this->entityManager->flush();
                 $this->addFlash('success', 'Refund request updated.');
                 return $this->redirectToRoute('admin_refund_detail', ['id' => $id]);

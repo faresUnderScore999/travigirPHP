@@ -15,6 +15,9 @@ class ActivityRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Activity::class);
     }
+    /**
+     * @return array<int, Activity>
+     */
     public function findByVoyageId(int $voyageId): array
 {
     return $this->createQueryBuilder('a')

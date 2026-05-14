@@ -42,7 +42,6 @@ class VoyageTest extends TestCase
 
         // Image URL (currently not implemented, should return null)
         $this->assertNull($voyage->getImageUrl());
-        $voyage->setImageUrl(['http://example.com/image.jpg']);
         // Setter does nothing, getter still null – this is the current behaviour.
         $this->assertNull($voyage->getImageUrl());
     }

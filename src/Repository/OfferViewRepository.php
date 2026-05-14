@@ -138,6 +138,9 @@ class OfferViewRepository extends ServiceEntityRepository
      * Find most viewed offers
      * @return array
      */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function findMostViewedOffers(int $limit = 10): array
     {
         return $this->createQueryBuilder('ov')

@@ -1,0 +1,337 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Controller\\AIAnalyticsController\:\:formatAnalyticsResult\(\) should return string but returns string\|false\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Controller/AIAnalyticsController.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_column expects array, array\<string, mixed\>\|float\|int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AIAnalyticsController.php
+
+		-
+			message: '#^Parameter \#1 \$snapshot of method App\\Controller\\AIAnalyticsController\:\:formatSnapshotSummary\(\) expects array\<string, mixed\>, array\<string, mixed\>\|float\|int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AIAnalyticsController.php
+
+		-
+			message: '#^Parameter \#2 \$result of method App\\Controller\\AIAnalyticsController\:\:formatAnalyticsResult\(\) expects array\<string, mixed\>\|float\|int\|string\|null, array\<int\|string, mixed\>\|float\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AIAnalyticsController.php
+
+		-
+			message: '#^Part \$result \(array\<string, mixed\>\|float\|int\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: src/Controller/AIAnalyticsController.php
+
+		-
+			message: '#^Parameter \#3 \$email of method App\\Service\\ReclamationService\:\:getPaginatedReclamations\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ReclamationController.php
+
+		-
+			message: '#^Offset ''voyage_id'' might not exist on array\<string, mixed\>\|null\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: src/Controller/ReservationController.php
+
+		-
+			message: '#^Parameter \#2 \$query of method App\\Service\\SearchHistoryService\:\:recordSearch\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/VoyageController.php
+
+		-
+			message: '#^Parameter \#1 \$email of method App\\Entity\\User\:\:setEmail\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Security/GoogleAuthenticator.php
+
+		-
+			message: '#^Parameter \#1 \$userId of method App\\Service\\UserLoginService\:\:recordLogin\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Security/GoogleAuthenticator.php
+
+		-
+			message: '#^Parameter \#1 \$activity of method App\\Service\\ActivityService\:\:normalizeActivity\(\) expects App\\Entity\\Activity, App\\Entity\\Activity\|array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/ActivityService.php
+
+		-
+			message: '#^Cannot access offset ''approved'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''cancelled'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''confirmed'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''high_priority'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''in_progress'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''open'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''paid'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''pending'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''rejected'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''resolved'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''searchers'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''total'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 3
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''total_approved_amount'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''total_reservations'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''total_revenue'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Cannot access offset ''viewers'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Method App\\Service\\Analytics\\MetricsService\:\:getTopSearchedDestinations\(\) should return array\<int, array\{destination\: string, search_count\: int\}\> but returns list\<array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Method App\\Service\\Analytics\\MetricsService\:\:getUnmetDemandDestinations\(\) should return array\<int, array\{destination\: string, search_count\: int\}\> but returns list\<array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Parameter \#2 \$baseTimestamp of function strtotime expects int\|null, int\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Analytics/MetricsService.php
+
+		-
+			message: '#^Parameter \#1 \$userId of method App\\Service\\AuthService\:\:isAdmin\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Service/AuthService.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, bool\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/BookingComService.php
+
+		-
+			message: '#^Method App\\Service\\CloudinaryService\:\:sendRequest\(\) should return string but returns string\|true\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/CloudinaryService.php
+
+		-
+			message: '#^Parameter \#1 \$offer of method App\\Service\\OfferService\:\:normalizeOffer\(\) expects App\\Entity\\Offer, App\\Entity\\Offer\|array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/OfferService.php
+
+		-
+			message: '#^Parameter \#1 \$voyageId of method App\\Service\\VoyageService\:\:extractImageUrls\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/OfferService.php
+
+		-
+			message: '#^Parameter \#1 \$reservationId of method App\\Service\\ReservationService\:\:getReservationById\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/ReservationService.php
+
+		-
+			message: '#^Parameter \#1 \$format of method DateTime\:\:format\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/ValidationService.php
+
+		-
+			message: '#^Parameter \#1 \$format of static method DateTime\:\:createFromFormat\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Service/ValidationService.php
+
+		-
+			message: '#^Parameter \#1 \$image of method App\\Service\\VoyageImageService\:\:normalizeImage\(\) expects App\\Entity\\VoyageImage, App\\Entity\\VoyageImage\|array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/VoyageImageService.php
+
+		-
+			message: '#^Parameter \#1 \$voyageId of method App\\Entity\\VoyageImage\:\:setVoyageId\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/VoyageImageService.php
+
+		-
+			message: '#^Parameter \#3 \$preloadedVoyages of method App\\Service\\VoyageImageService\:\:normalizeImages\(\) expects array\<int, object\>, array\<int\|string, App\\Entity\\Voyage\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/VoyageImageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getActivities\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getCreatedAt\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getDescription\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getDestination\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getEndDate\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getId\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getOffers\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getPrice\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getStartDate\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getTitle\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Cannot call method getActivities\(\) on App\\Entity\\Voyage\|array\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Parameter \#1 \$voyage of method App\\Service\\VoyageService\:\:mapVoyage\(\) expects object, App\\Entity\\Voyage\|array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Parameter \#1 \$voyage of method App\\Service\\VoyageService\:\:mapVoyageForAdmin\(\) expects object, App\\Entity\\Voyage\|array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Parameter \#1 \$voyageIds of method App\\Repository\\VoyageImageRepository\:\:findByVoyageIds\(\) expects array\<int\>, array\<int\|null\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/VoyageService.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getManager\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/doctrine-object-manager.php

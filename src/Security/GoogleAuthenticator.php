@@ -45,7 +45,10 @@ class GoogleAuthenticator extends OAuth2Authenticator
 
                 $email = $googleUser->getEmail();
                 $name = $googleUser->getName();
-           // ou getDisplayName() selon la version
+
+                if (!$email) {
+                    throw new \Exception('No email provided by Google.');
+                }
 
                 // 1) On cherche l'utilisateur par email
                 $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
@@ -91,7 +94,7 @@ public function onAuthenticationSuccess(Request $request, TokenInterface $token,
 
     // Enregistrement du log de connexion (comme tu le fais en classique)
     $this->userLoginService->recordLogin(
-        $user->getId(),
+        (int) $user->getId(),
         'google',
         $request->getClientIp(),
         $request->headers->get('User-Agent')

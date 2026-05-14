@@ -57,7 +57,7 @@ class UserOfferService
     }
 
     /**
-     * Get active offers for a user
+     * @return UserOffer[]
      */
     public function getActiveOffers(int $userId): array
     {
@@ -65,7 +65,7 @@ class UserOfferService
     }
 
     /**
-     * Get all offers for a user
+     * @return UserOffer[]
      */
     public function getOffersByUser(int $userId): array
     {

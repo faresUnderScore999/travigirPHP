@@ -28,12 +28,12 @@ class TravelSearchController extends AbstractController
             return $this->json(['success' => false, 'error' => 'Too many requests. Please wait a moment.'], 429);
         }
 
-        $fromId    = trim($request->request->get('fromId', ''));
-        $toId      = trim($request->request->get('toId', ''));
-        $depart    = trim($request->request->get('departDate', ''));
-        $return    = trim($request->request->get('returnDate', '')) ?: null;
+        $fromId    = (string) $request->request->get('fromId', '');
+        $toId      = (string) $request->request->get('toId', '');
+        $depart    = (string) $request->request->get('departDate', '');
+        $return    = (string) $request->request->get('returnDate', '') ?: null;
         $adults    = max(1, (int) $request->request->get('adults', 1));
-        $cabin     = $request->request->get('cabinClass', 'ECONOMY');
+        $cabin     = (string) $request->request->get('cabinClass', 'ECONOMY');
 
         if (!$fromId || !$toId || !$depart) {
             return $this->json(['success' => false, 'error' => 'Please fill in all required fields.'], 400);
@@ -62,10 +62,10 @@ class TravelSearchController extends AbstractController
             return $this->json(['success' => false, 'error' => 'Too many requests. Please wait a moment.'], 429);
         }
 
-        $destId    = trim($request->request->get('dest_id', ''));
-        $searchType= trim($request->request->get('search_type', 'city'));
-        $checkin   = trim($request->request->get('arrival_date', ''));
-        $checkout  = trim($request->request->get('departure_date', ''));
+        $destId    = (string) $request->request->get('dest_id', '');
+        $searchType= (string) $request->request->get('search_type', 'city');
+        $checkin   = (string) $request->request->get('arrival_date', '');
+        $checkout  = (string) $request->request->get('departure_date', '');
         $adults    = max(1, (int) $request->request->get('adults', 2));
         $rooms     = max(1, (int) $request->request->get('rooms', 1));
 
@@ -92,7 +92,7 @@ class TravelSearchController extends AbstractController
     #[Route('/travel-search/flight-destinations', name: 'travel_search_flight_dest', methods: ['GET'])]
     public function flightDestinations(Request $request): JsonResponse
     {
-        $query = trim($request->query->get('q', ''));
+        $query = (string) $request->query->get('q', '');
         if (strlen($query) < 2) {
             return $this->json([]);
         }
@@ -103,7 +103,7 @@ class TravelSearchController extends AbstractController
     #[Route('/travel-search/hotel-destinations', name: 'travel_search_hotel_dest', methods: ['GET'])]
     public function hotelDestinations(Request $request): JsonResponse
     {
-        $query = trim($request->query->get('q', ''));
+        $query = (string) $request->query->get('q', '');
         if (strlen($query) < 2) {
             return $this->json([]);
         }
