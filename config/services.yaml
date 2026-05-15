@@ -45,5 +45,15 @@ services:
     App\Controller\AiChatController:
         tags: ['controller.service_arguments']
 
+    App\Service\TwilioService:
+        arguments:
+            $accountSid: '%env(TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(TWILIO_AUTH_TOKEN)%'
+            $messagingServiceSid: '%env(TWILIO_MESSAGING_SERVICE_SID)%'
+
+    App\Service\TranslationService:
+        arguments:
+            $apiKey: '%env(GOOGLE_TRANSLATE_API_KEY)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

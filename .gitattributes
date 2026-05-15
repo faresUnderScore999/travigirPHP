@@ -1,0 +1,8 @@
+# Set default behavior, let Git handle text files
+* text=auto
+
+# Ensure PHP files use LF in working tree
+*.php text eol=lf
+
+# Ensure shell scripts keep LF
+*.sh text eol=lf
