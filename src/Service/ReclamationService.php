@@ -4,8 +4,9 @@ namespace App\Service;
 
 use App\Entity\Reclamation;
 use App\Repository\ReclamationRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use App\Service\AuthService;
+use App\Service\TwilioService;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 class ReclamationService
@@ -14,6 +15,7 @@ class ReclamationService
         private readonly ReclamationRepository $reclamationRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly AuthService $authService,
+        private readonly TwilioService $twilioService,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -58,6 +60,9 @@ class ReclamationService
         }
 
         $this->entityManager->flush();
+
+        $this->twilioService->notifyReclamationStatus($reclamation->getUserId(), $status, $reclamation->getId() ?? 0);
+
         return $reclamation;
     }
 

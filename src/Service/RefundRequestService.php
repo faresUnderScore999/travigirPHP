@@ -4,9 +4,10 @@ namespace App\Service;
 
 use App\Entity\RefundRequest;
 use App\Repository\RefundRequestRepository;
+use App\Service\AuthService;
+use App\Service\TwilioService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use App\Service\AuthService;
 
 class RefundRequestService
 {
@@ -15,6 +16,7 @@ class RefundRequestService
         private readonly EntityManagerInterface $entityManager,
         /** @phpstan-ignore property.onlyWritten */
         private readonly AuthService $authService,
+        private readonly TwilioService $twilioService,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -50,6 +52,12 @@ class RefundRequestService
 
         $refundRequest->setStatus($status);
         $this->entityManager->flush();
+
+        $this->twilioService->notifyRefundStatus(
+            $refundRequest->getRequesterId(),
+            $status,
+            $refundRequest->getAmount()
+        );
 
         return $refundRequest;
     }
