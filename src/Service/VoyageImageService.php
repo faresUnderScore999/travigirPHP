@@ -101,7 +101,10 @@ class VoyageImageService
                 []
             );
             foreach ($results as $v) {
-                $voyages[$v->getId()] = $v;
+                $id = $v->getId();
+                if ($id !== null) {
+                    $voyages[$id] = $v;
+                }
             }
         }
 
